@@ -3,9 +3,9 @@ COMP 7082 Software Engineering Course Project
 
 DEV NOTES:
 
-Had some fun here with `node` and `expo`, which is a nice wrapper for React Native. With about 3 commands I had a little server for the app running on my computer that I could connect to on my phone just by scanning a QR code (in the Expo Go app). Seems to be really nice and have APIs for everything we'd need. All open source and we could sell an app using this stuff and not owe anyone anything. Works well on my Android and should run well on your iOS.
+Had some fun here with node and expo, which is a nice wrapper for React Native. With about 3 commands I had a little server for the app running on my computer that I could connect to on my phone just by scanning a QR code (in the Expo Go app). Seems to be really nice and have APIs for everything we'd need. All open source and we could sell an app using this stuff and not owe anyone anything. Works well on my Android and should run well on your iOS.
 
-Everything added in the repo is from the default `node` and `expo` installs, except for some small changes to App.tsx!
+Everything added in the repo is from the default `node and `expo installs, except for some small changes to add the "M-Path" title in mobile/App.tsx! If you're not so familiar with React or Git or any of this stuff it would make me happy to go over parts of it in more detail!
 
 ## Setup Instructions:
 
@@ -13,7 +13,7 @@ Everything added in the repo is from the default `node` and `expo` installs, exc
 
 [Go here](https://nodejs.org/en/download/archive/v24.13.0) and get probably:
 
-"node-<LTS-version>-x64.msi"
+"node-\<LTS-version\>-x64.msi"
 
 To make sure you have it downloaded you can enter into cmd prompt or powershell: 
 
