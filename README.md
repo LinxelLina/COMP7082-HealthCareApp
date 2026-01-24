@@ -1,18 +1,11 @@
 # COMP7082-HealthCareApp
 COMP 7082 Software Engineering Course Project
 
-███╗   ███╗      ██████╗  █████╗ ████████╗██╗  ██╗
-████╗ ████║      ██╔══██╗██╔══██╗╚══██╔══╝██║  ██║
-██╔████╔██║█████╗██████╔╝███████║   ██║   ███████║
-██║╚██╔╝██║╚════╝██╔═══╝ ██╔══██║   ██║   ██╔══██║
-██║ ╚═╝ ██║      ██║     ██║  ██║   ██║   ██║  ██║
-╚═╝     ╚═╝      ╚═╝     ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
-
 DEV NOTES:
 
-Had some fun here with `node` and `expo`, which is a nice wrapper for React Native. With about 3 commands I had a little server for the app running on my machine that I could connect to on my phone just by scanning a QR code. Seems to be really nice and have APIs for everything we'd need. All open source and we could sell an app using this stuff and not owe anyone anything. Works well on my Android and should run well on your iOS.
+Had some fun here with `node` and `expo`, which is a nice wrapper for React Native. With about 3 commands I had a little server for the app running on my computer that I could connect to on my phone just by scanning a QR code (in the Expo Go app). Seems to be really nice and have APIs for everything we'd need. All open source and we could sell an app using this stuff and not owe anyone anything. Works well on my Android and should run well on your iOS.
 
-Everything in the repo is from the `node` and `expo` install, except for some small changes to App.tsx!
+Everything added in the repo is from the default `node` and `expo` installs, except for some small changes to App.tsx!
 
 ## Setup Instructions:
 
@@ -44,7 +37,7 @@ Create a folder you want to use for the app on your local machine. Then navigate
 
 #### 3. Install NPM and launch your Expo server!
 
-From the same /mobile folder run
+From the same /mobile folder run:
 
 ```cmd prompt
 npm install
@@ -53,7 +46,7 @@ npx expo start
 
 Make sure the server and your phone are on the same wifi, and scan the QR code generated in your cmd prompt with the Expo Go app from your phone. The app should load automatically with the word "M-Path" in green and in the middle.
 
-It didn't work at first for me, only did when I ran.
+It didn't work at first for me, only did when I ran:
 
 ```cmd prompt
 npx expo start --tunnel
@@ -61,3 +54,15 @@ npx expo start --tunnel
 
 
 Ctrl + C should end the app on your cmd prompt.
+
+#### Making changes
+
+Go to the root directory, COMP7082-HealthCareApp. If git is setup correctly you can go:
+
+```bash
+git add .
+git commit -m "message"
+git push origin main
+```
+
+Use `git push origin origin main` for the first push, then just `git push` afterwards.
