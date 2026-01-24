@@ -65,4 +65,4 @@ git commit -m "message"
 git push origin main
 ```
 
-Use `git push origin origin main` for the first push, then just `git push` afterwards.
+Use `git push origin` for the first push, then just `git push` afterwards.
