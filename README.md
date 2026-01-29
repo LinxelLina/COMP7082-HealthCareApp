@@ -40,7 +40,7 @@ Create a folder you want to use for the app on your local machine. Then navigate
 From the same /mobile folder run:
 
 ```cmd prompt
-npm install
+npm install expo
 npx expo start
 ```
 
