@@ -1,0 +1,32 @@
+# Dependencies
+**/node_modules/
+
+# Expo / React Native
+**/.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Metro / caches
+.metro-health-check*
+**/.cache/
+
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Env
+.env*.local
+
+# TypeScript
+*.tsbuildinfo
+
+# Native builds
+**/ios/
+**/android/
