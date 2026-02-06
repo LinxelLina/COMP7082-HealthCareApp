@@ -41,3 +41,11 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Mobile app (Expo)
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/expo-env.d.ts
+
