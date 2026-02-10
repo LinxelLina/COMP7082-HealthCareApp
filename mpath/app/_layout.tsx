@@ -19,6 +19,7 @@ export default function RootLayout() {
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="index" options={{title: "Home"}} />
         <Stack.Screen name="profile" options={{title: "Profile"}} />
+        <Stack.Screen name="temp_list" options={{title: "Temp_List"}} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
