@@ -109,6 +109,7 @@ export default function HomeScreen() {
               fontWeight: "bold",
               }}
             >Home</Text>
+            <Button title="List" onPress={()=> router.push("/temp_list")}/>
             <Button title="Go to Profile" onPress={()=> router.push("/profile")}/>
           </View>
         <StatusBar style="auto" />
