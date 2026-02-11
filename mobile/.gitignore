@@ -1,0 +1,39 @@
+# --- Dependencies ---
+node_modules/
+**/node_modules/
+
+# --- Expo / React Native ---
+.expo/
+**/.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Expo / Metro caches
+.metro-health-check*
+**/.metro-health-check*
+**/.cache/
+**/.turbo/
+
+# --- Logs ---
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+pnpm-debug.log*
+
+# --- OS / Editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+
+# --- Env ---
+.env*.local
+
+# --- TypeScript ---
+*.tsbuildinfo
+
+# --- Native generated folders (if prebuild is used) ---
+ios/
+android/
+**/ios/
+**/android/
