@@ -110,6 +110,7 @@ export default function HomeScreen() {
               }}
             >Home</Text>
             <Button title="List" onPress={()=> router.push("/temp_list")}/>
+            <Button title="Charity Form" onPress={()=> router.push("/charity_form")}/>
             <Button title="Go to Profile" onPress={()=> router.push("/profile")}/>
           </View>
         <StatusBar style="auto" />

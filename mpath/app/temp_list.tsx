@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Picker } from "@react-native-picker/picker";
-import { View, Text, TextInput, StyleSheet, FlatList, Button } from "react-native";
+import { View, Text, TextInput, StyleSheet, FlatList, Button, Pressable, Modal, ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
     const temp_list: string[]=
     [
@@ -9,111 +10,109 @@ import { View, Text, TextInput, StyleSheet, FlatList, Button } from "react-nativ
         "Feed the fish"
     ]
 
-    type TempListProps = {
-        category: string;
-        goal: string;
-    };
+    type Category = "Food" | "Fitness" | "Mental_Health" | "Social" | "Study" | "Sleep" | "Other";
+
+    const OPTIONS: Record<Category, string[]> = {
+        Food: ["Eat breakfast", "Eat lunch", "Eat dinner", "Snack","Drink more water", "Eat more fruits", "Eat more vegetables"],
+        Fitness: ["Go for a walk","Go for a run", "Do yoga", "Lift weights", "Got to the gym", "Go to the pool"],
+        Mental_Health: ["Meditate", "Journal", "Practice gratitude", "Take a break", "Go outside", "Practice mindfulness"],
+        Social: ["Call a friend", "Meet up with a friend", "Go to a social event", "Join a club", "Volunteer", "Attend a community event"],
+        Study: ["Review notes", "Read a book", "Practice problems", "Attend a study group", "Watch educational videos", "Take practice tests"],
+        Sleep: ["Go to bed earlier", "Wake up earlier", "Take a nap", "Create a bedtime routine", "Limit screen time before bed", "Avoid caffeine in the evening"],
+        Other: ["Practice a hobby", "Learn something new", "Organize your space", "Set goals for the week", "Reflect on your day","test","test2","test4"]
+    }
 
 export default function Temp_List() {
     const [currentList, setCurrentList] = useState<string[]>([]);
-    const [addGoal, setAddGoal] = useState("");
-
-    const [selectedCategory, setSelectedCategory] = useState("Food/Drink");
-    const [items, setItems] = useState<TempListProps[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+    const [inputValue, setInputValue] = useState("");   
 
     useEffect(()=>{
         console.log("Data loaded");
         setCurrentList(temp_list);
     }, [])
 
-    useEffect(()=>{
-        //Need to fix this issue, but when rendering the initial setCurrentList(temp_list) it would cause this useEffect to activate and clear it
-        //Currently works like this, but need to take into account what happens if there's an empty list to start
-        //TO-DO: Fix this.
-        if(!(currentList.length <= 0)){
-            setCurrentList(currentList);
-        }
-        
-    },[currentList])
-
-    function addToList(){
-        console.log(addGoal);
-        setCurrentList(prevList =>[...prevList, addGoal]);
-    }
-
-    const addItem = () => {
-    setItems(prev => [
-        ...prev,
-        {
-        category: selectedCategory,
-        goal: addGoal,
-        },
-    ]);
-    };
-
-    
     return (
     <>
-    <View>
+    <SafeAreaView style={styles.container}>
+        <TextInput
+            style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 8,
+                padding: 12,
+                marginTop: 2,
+                marginBottom: 2,
+                backgroundColor: "white",}}
+            placeholder="Add a new habit"
+            returnKeyType="done"
+            value={inputValue}
+            onChangeText={setInputValue}
+            onSubmitEditing={() => {
+                const newHabit = inputValue.trim();
+                if (newHabit) {
+                    setCurrentList(prev => [...prev, newHabit]);
+                    setInputValue("");
+                }
+            }}
+        />
         <FlatList
             data={currentList}
-            keyExtractor={(item) => item}
-            renderItem={({ item, index }) => (
-                <Text key={index} style={styles.item}>{item}</Text>
+            keyExtractor={(item, index) => item + index}
+            renderItem={({ item }) => (
+            <View style={styles.item2}>
+                <Text>{item}</Text>
+            </View>
             )}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            ItemSeparatorComponent={() => <View style={styles.separator2} />}
+            contentInsetAdjustmentBehavior="never"
+            automaticallyAdjustContentInsets={false}
+            contentContainerStyle={{ paddingTop: 0 }}
         />
-
-        {/* {currentList?.map((point, index)=>(
-            <Text   
-            key = {index}
-            // style={styles{
-            //     color: "green",
-            //     fontSize: 32,
-            //     fontWeight: "bold",
-                // }}
-                >
-                {point}
-            </Text>
-            ))} */}
-
-        <TextInput placeholder="Enter Goal"
-            value={addGoal}
-            onChangeText={setAddGoal}
-            onSubmitEditing={addToList}
-            returnKeyType="done"/>
-
-              {/* Select Menu */}
-            <Picker
-                selectedValue={selectedCategory}
-                onValueChange={(value) => setSelectedCategory(value)}
-                style={styles.picker}
+            
+        <Modal
+            visible={selectedCategory !== null}
+            transparent
+            animationType="slide"
+            // onRequestClose={() => setSelectedCategory(null)}
+        >
+            <Pressable
+                style={styles.modalOverlay}
+                onPress={() => setSelectedCategory(null)}
             >
-                <Picker.Item label="Fruit" value="Fruit" />
-                <Picker.Item label="Vegetables" value="Vegetables" />
-                <Picker.Item label="Dairy" value="Dairy" />
-                <Picker.Item label="Meat" value="Meat" />
-            </Picker>
+                <Pressable style={styles.modalContent} onPress={() => {}}>
 
-            <Button title="Add to list" onPress={addItem} />
+                <Text style={styles.modalTitle}>{selectedCategory}</Text>
+                {selectedCategory &&
+                    OPTIONS[selectedCategory].map((option) => (
+                    <Pressable
+                        key={option}
+                        style={styles.option}
+                        onPress={() => {
+                        setCurrentList(prev => [...prev, option]);
+                        }}
+                    >
+                        <Text>{option}</Text>
+                    </Pressable>
+                    ))}
+                </Pressable>
+            </Pressable>
+        </Modal>
 
-            {/* List */}
-            <FlatList
-                data={items}
-                keyExtractor={(item) => item.goal}
-                renderItem={({ item }) => (
-                <View style={styles.item2}>
-                    <Text>{item.goal}</Text>
-                </View>
-                )}
-                ItemSeparatorComponent={() => <View style={styles.separator2} />}
-                style={styles.list}
-            />
-    </View>
+        <View style={styles.categoryBar}>
+            {Object.keys(OPTIONS).map((category) => (
+                <Pressable
+                    key={category}
+                    onPress={() => setSelectedCategory(category as Category)}
+                    style={styles.categoryButton}
+                    >
+                    <Text style={styles.categoryText}>{category}</Text>
+                </Pressable>
+            ))}
+        </View>
+    </SafeAreaView>
     </>
-    );
-
-    
+    );  
 }
 
 const styles = StyleSheet.create({
@@ -127,20 +126,56 @@ const styles = StyleSheet.create({
   },
     container: {
     flex: 1,
-    paddingTop: 50,
+    backgroundColor: "#fff",
   },
   picker: {
     marginHorizontal: 16,
   },
-  list: {
-    marginTop: 20,
+  categoryList:{
+    flex:1,
   },
   item2: {
     padding: 16,
+    backgroundColor: "#f9f9f9",
   },
   separator2: {
     height: 1,
     backgroundColor: "#ddd",
     marginHorizontal: 16,
+  },
+  categoryBar: {
+    height:80,
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderColor: "#ddd",
+    backgroundColor: "white",
+  },
+    categoryButton: {
+    flex: 1,
+    padding: 16,
+    alignItems: "center",
+  },
+  categoryText: {
+    fontWeight: "600",
+    color: "#333",
+  },
+    modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.3)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 12,
+  },
+  option: {
+    paddingVertical: 12,
   },
 });
