@@ -15,7 +15,7 @@ import React from "react";
 import * as Notifications from "expo-notifications";
 
 //added platform for notifications, logbox for ignoring notification error banner XD
-import { Button, Pressable, Text, View, Platform, LogBox } from "react-native";
+import { StyleSheet, Button, Pressable, Text, View, Platform, LogBox } from "react-native";
 // Keeps the app from overlapping with statusbar
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, Tabs, Link, router } from 'expo-router';
