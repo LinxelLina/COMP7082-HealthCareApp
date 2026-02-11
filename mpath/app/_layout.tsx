@@ -20,6 +20,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{title: "Home"}} />
         <Stack.Screen name="profile" options={{title: "Profile"}} />
         <Stack.Screen name="temp_list" options={{title: "Temp_List"}} />
+        <Stack.Screen name="charity_form" options={{title: "Charity Form"}} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
