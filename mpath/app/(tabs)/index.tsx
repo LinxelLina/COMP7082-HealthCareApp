@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 // import { Button, Platform, Pressable, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 
 import { HelloWave } from '@/components/hello-wave';
+
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -9,12 +10,61 @@ import { ThemedView } from '@/components/themed-view';
 // Controls the appearance of the users status bar
 import { StatusBar } from "expo-status-bar";
 import React from "react";
-import { Button, Pressable, Text, View } from "react-native";
+
+// expo's built-in functionality for notifications
+import * as Notifications from "expo-notifications";
+
+//added platform for notifications, logbox for ignoring notification error banner XD
+import { Button, Pressable, Text, View, Platform, LogBox } from "react-native";
 // Keeps the app from overlapping with statusbar
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, Tabs, Link, router } from 'expo-router';
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+LogBox.ignoreLogs([
+  "expo-notifications: Android Push notifications",
+  "was removed from Expo Go",
+]);
+
+
 export default function HomeScreen() {
+
+  // Function to handle notifications
+  const notify = async () => {
+    const { status } = await Notifications.requestPermissionsAsync();
+
+    if (status !== "granted") {
+      console.log("Notification permission not granted");
+      return;
+    }
+
+    // Android fix from chatGPT to help banners and sound
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.MAX,
+      });
+    }
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "M-Path",
+        body: "Group 4 deserves an A+ for this!",
+        sound: "default",
+      },
+      trigger: null,
+    });
+  };
+
+
   return (
     // <ParallaxScrollView
     //   headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -111,6 +161,7 @@ export default function HomeScreen() {
             >Home</Text>
             <Button title="List" onPress={()=> router.push("/temp_list")}/>
             <Button title="Go to Profile" onPress={()=> router.push("/profile")}/>
+            <Button title="Test Notification" onPress={notify}/>
           </View>
         <StatusBar style="auto" />
       </SafeAreaView>
