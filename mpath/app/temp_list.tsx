@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Picker } from "@react-native-picker/picker";
 import { View, Text, TextInput, StyleSheet, FlatList, Button, Pressable, Modal, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Animated from 'react-native-reanimated';
 
     const temp_list: string[]=
     [
@@ -56,13 +57,18 @@ export default function Temp_List() {
                 }
             }}
         />
+        {/* https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/handling-gestures/
+        https://reactnative.dev/docs/pressable
+         */}
         <FlatList
             data={currentList}
             keyExtractor={(item, index) => item + index}
             renderItem={({ item }) => (
+            <SwipeToAction >
             <View style={styles.item2}>
                 <Text>{item}</Text>
             </View>
+            </SwipeToAction>
             )}
             ItemSeparatorComponent={() => <View style={styles.separator2} />}
             contentInsetAdjustmentBehavior="never"
