@@ -1,20 +1,30 @@
-import { useEffect, useState } from "react";
-import { Picker } from "@react-native-picker/picker";
-import { View, Text, TextInput, StyleSheet, FlatList, Button, Pressable, Modal, ScrollView } from "react-native";
+import {useState } from "react";
+import { View, Text, StyleSheet, FlatList, Button, Pressable, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import  SwipeRow from "./swipableComponent";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import GoalForm from "./goal_form";
 
     type Habit = {
       id: string;
       goal: string;
+      category: string;
+      newHabit: boolean;
+      duration: Date;
+      isComplete: boolean;
     };
-
+    type GoalForm = {
+      goal: string;
+      category: string;
+      newHabit: boolean;
+      duration: Date;
+      isComplete: boolean;
+    }
     const temp_list: Habit[]=
     [
-      { id: "1", goal: "Drink more water" },
-      { id: "2", goal: "Eat more food" },
-      { id: "3", goal: "Feed the fish" },
+      { id: "1", goal: "Drink more water", category: "Food", newHabit: true, duration: new Date(), isComplete: false },
+      { id: "2", goal: "Eat more food", category: "Food", newHabit: true, duration: new Date(), isComplete: false },
+      { id: "3", goal: "Feed the fish", category: "Other", newHabit: true, duration: new Date(), isComplete: false },
     ];
 
     type Category = "Food" | "Fitness" | "Mental_Health" | "Social" | "Study" | "Sleep" | "Other";
@@ -33,11 +43,7 @@ export default function Temp_List() {
     const [currentList, setCurrentList] = useState<Habit[]>(temp_list);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [inputValue, setInputValue] = useState("");   
-
-    // useEffect(()=>{
-    //     console.log("Data loaded");
-    //     setCurrentList(temp_list);
-    // }, [])
+    const [openNewHabitForm, setOpenNewHabitForm] = useState(false);
 
     const deleteItem = (id: string) => {
       setCurrentList(prev =>
@@ -45,45 +51,68 @@ export default function Temp_List() {
       );
     };
 
+    const toggleComplete = (id: string) => {
+      setCurrentList(prev =>
+        prev.map(item =>
+          item.id === id ? { ...item, isComplete: !item.isComplete } : item
+        )
+      );
+    };
+
     return (
     <>
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, position: "relative" }}>
     <SafeAreaView style={styles.container}>
-        <TextInput
+      <Button title="Add New Habit" onPress={() => setOpenNewHabitForm(!openNewHabitForm)}/>
+        {openNewHabitForm && (
+          <Pressable
             style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 8,
-                padding: 12,
-                marginTop: 2,
-                marginBottom: 2,
-                backgroundColor: "white",}}
-            placeholder="Add a new habit"
-            returnKeyType="done"
-            value={inputValue}
-            onChangeText={setInputValue}
-            onSubmitEditing={() => {
-                const newHabit = inputValue.trim();
-                if (newHabit) {
-                    setCurrentList(prev => [
-                        ...prev,
-                        {
-                          id:Date.now().toString(), // modern & safe
-                          goal: newHabit,
-                        },
-                      ]);
-                    setInputValue("");
-                }
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.3)', // dim background
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 1000,
             }}
-        />
+            onPress={() => setOpenNewHabitForm(false)} // close if pressed outside
+          >
+              <Pressable
+                style={{
+                  width: '90%',
+                  height: '80%',
+                  backgroundColor: 'white',
+                  borderRadius: 16,
+                  padding: 16,
+                }}
+                onPress={() => {}}
+              >
+                <GoalForm onSubmit={(form:GoalForm) => {
+                  setCurrentList(prev => [
+                    ...prev,
+                    {
+                      id: Date.now().toString(), // modern & safe
+                      ...form,
+                    },
+                  ]);
+                  setOpenNewHabitForm(false);
+                }}/>
+              </Pressable>
+          </Pressable>
+        )}
+
         <FlatList
             data={currentList}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <SwipeRow
-                item={item}
-                onDelete={deleteItem}
-              />
+              <Pressable onLongPress={() => toggleComplete(item.id)}>
+                <SwipeRow
+                  item={item}
+                  onDelete={deleteItem}
+                />
+              </Pressable>
             )}
             ItemSeparatorComponent={() => <View style={styles.separator2} />}
             contentInsetAdjustmentBehavior="never"
@@ -95,7 +124,6 @@ export default function Temp_List() {
             visible={selectedCategory !== null}
             transparent
             animationType="slide"
-            // onRequestClose={() => setSelectedCategory(null)}
         >
             <Pressable
                 style={styles.modalOverlay}
@@ -115,6 +143,10 @@ export default function Temp_List() {
                           {
                             id: Date.now().toString(), // modern & safe
                             goal: option,
+                            newHabit: true,
+                            duration: new Date(),
+                            isComplete: false,
+                            category: selectedCategory,
                           },
                         ]);
                         }}

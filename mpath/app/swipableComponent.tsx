@@ -3,9 +3,13 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import Animated from 'react-native-reanimated';
 
- type Habit = {
+    type Habit = {
       id: string;
       goal: string;
+      category: string;
+      newHabit: boolean;
+      duration: Date;
+      isComplete: boolean;
     };
 
 export default function SwipeRow({
@@ -38,7 +42,6 @@ export default function SwipeRow({
 
   return (
     <View style={{ backgroundColor: "white" }}>
-      {/* Red background */}
       <View
         style={{
           ...StyleSheet.absoluteFillObject,
@@ -63,7 +66,7 @@ export default function SwipeRow({
             animatedStyle,
           ]}
         >
-          <Text>{item.goal}</Text>
+          <Text style={{ textDecorationLine: item.isComplete ? "line-through" : "none" }}>{item.goal}</Text>
         </Animated.View>
       </GestureDetector>
     </View>

@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Picker } from "@react-native-picker/picker";
-import { View, Text, TextInput, StyleSheet, FlatList, Button, Pressable, Modal, ScrollView } from "react-native";
+import { View, Text, TextInput, StyleSheet, Button } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Checkbox } from 'expo-checkbox';
-import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 type GoalForm = {
     goal: string;
@@ -12,10 +12,10 @@ type GoalForm = {
     duration: Date;
     isComplete: boolean;
 }
-export default function GoalForm() {
-    const [currentList, setCurrentList] = useState<string[]>([]);
-    const [inputValue, setInputValue] = useState("");   
-    const [inputHeight, setInputHeight] = useState(40);
+type GoalFormProps = {
+  onSubmit: (form: GoalForm) => void;
+};
+export default function GoalForm({onSubmit}: GoalFormProps) {
     const [form, setForm] = useState<GoalForm>({
         goal: "",
         category: "",
@@ -24,32 +24,15 @@ export default function GoalForm() {
         isComplete: false,
     });
     const [date, setDate] = useState(new Date());
-    const [mode, setMode] = useState('date');
-    const [show, setShow] = useState(false);
 
     const onChange = (event:any, selectedDate:any) => {
       const currentDate = selectedDate;
-      setShow(false);
       setDate(currentDate);
     };
 
-    const showMode = (currentMode) => {
-      setShow(true);
-      setMode(currentMode);
-    };
-
-    const showDatepicker = () => {
-      showMode('date');
-    };
-
-    const showTimepicker = () => {
-      showMode('time');
-    };
-  
-    const handleContentSizeChange = (event: any) => {
-        const newHeight = Math.min(150, Math.max(40, event.nativeEvent.contentSize.height));
-        setInputHeight(newHeight);
-    };
+    function onSubmitHandler(){
+        onSubmit(form);
+    }
 
     return (
     <>
@@ -98,7 +81,7 @@ export default function GoalForm() {
         </View>
         <Text>selected: {date.toLocaleString()}</Text>
 
-        <Button title="Submit" onPress={() => console.log(form)} />
+        <Button title="Submit" onPress={onSubmitHandler} />
     </SafeAreaView>
     </>
     );  
