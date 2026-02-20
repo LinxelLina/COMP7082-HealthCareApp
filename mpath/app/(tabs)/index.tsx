@@ -9,7 +9,10 @@ import { ThemedView } from '@/components/themed-view';
 // import { Link } from 'expo-router';
 // Controls the appearance of the users status bar
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+
+// useEffect to test supabase on button press
+import React, {useEffect} from "react";
+import { supabase } from "@/utils/supabase";
 
 // expo's built-in functionality for notifications
 import * as Notifications from "expo-notifications";
@@ -19,6 +22,8 @@ import { StyleSheet, Button, Pressable, Text, View, Platform, LogBox } from "rea
 // Keeps the app from overlapping with statusbar
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, Tabs, Link, router } from 'expo-router';
+
+
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -37,7 +42,6 @@ LogBox.ignoreLogs([
 
 export default function HomeScreen() {
 
-  // Function to handle notifications
   const notify = async () => {
     const { status } = await Notifications.requestPermissionsAsync();
 
@@ -57,11 +61,56 @@ export default function HomeScreen() {
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "M-Path",
-        body: "Group 4 deserves an A+ for this!",
+        body: "Test notification!",
         sound: "default",
       },
       trigger: null,
     });
+  };
+
+    // Test insert and select row (with a button)
+  const testSupabase = async () => {
+    try {
+      console.log("Supabase URL:", process.env.EXPO_PUBLIC_SUPABASE_URL);
+
+      // insert a test row (and select it)
+      const { data: inserted, error: insertError } = await supabase
+        .from("goals")
+        .insert([
+          {
+            title: "Test Goal from Expo",
+            description: "Lina Supabase is talking to the apppppp",
+            category: "Test",
+            is_habit: false,
+            is_completed: false,
+          },
+        ])
+        .select()
+        .single();
+
+      if (insertError) {
+        console.log("Insert error:", insertError);
+        return;
+      }
+
+      console.log("Inserted row:", inserted);
+
+      // select * from goals orderby created_at
+      const { data: goals, error: selectError } = await supabase
+        .from("goals")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (selectError) {
+        console.log("Select error:", selectError);
+        return;
+      }
+
+      console.log("Latest goals:", goals);
+    } catch (e) {
+      console.log("Unexpected error:", e);
+    }
   };
 
 
@@ -164,6 +213,7 @@ export default function HomeScreen() {
             <Button title="Go to Profile" onPress={()=> router.push("/profile")}/>
             <Button title="Test Notification" onPress={notify}/>
             <Button title="Goal Form" onPress={()=> router.push("/goal_form")}/>
+            <Button title="Test Supabase (insert + select)" onPress={testSupabase} />
           </View>
         <StatusBar style="auto" />
       </SafeAreaView>
