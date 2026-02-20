@@ -1,15 +1,21 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Picker } from "@react-native-picker/picker";
 import { View, Text, TextInput, StyleSheet, FlatList, Button, Pressable, Modal, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Animated from 'react-native-reanimated';
+import  SwipeRow from "./swipableComponent";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-    const temp_list: string[]=
+    type Habit = {
+      id: string;
+      goal: string;
+    };
+
+    const temp_list: Habit[]=
     [
-        "Drink more water",
-        "Eat more food",
-        "Feed the fish"
-    ]
+      { id: "1", goal: "Drink more water" },
+      { id: "2", goal: "Eat more food" },
+      { id: "3", goal: "Feed the fish" },
+    ];
 
     type Category = "Food" | "Fitness" | "Mental_Health" | "Social" | "Study" | "Sleep" | "Other";
 
@@ -24,17 +30,24 @@ import Animated from 'react-native-reanimated';
     }
 
 export default function Temp_List() {
-    const [currentList, setCurrentList] = useState<string[]>([]);
+    const [currentList, setCurrentList] = useState<Habit[]>(temp_list);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [inputValue, setInputValue] = useState("");   
 
-    useEffect(()=>{
-        console.log("Data loaded");
-        setCurrentList(temp_list);
-    }, [])
+    // useEffect(()=>{
+    //     console.log("Data loaded");
+    //     setCurrentList(temp_list);
+    // }, [])
+
+    const deleteItem = (id: string) => {
+      setCurrentList(prev =>
+        prev.filter(item => item.id !== id)
+      );
+    };
 
     return (
     <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaView style={styles.container}>
         <TextInput
             style={{
@@ -52,23 +65,25 @@ export default function Temp_List() {
             onSubmitEditing={() => {
                 const newHabit = inputValue.trim();
                 if (newHabit) {
-                    setCurrentList(prev => [...prev, newHabit]);
+                    setCurrentList(prev => [
+                        ...prev,
+                        {
+                          id:Date.now().toString(), // modern & safe
+                          goal: newHabit,
+                        },
+                      ]);
                     setInputValue("");
                 }
             }}
         />
-        {/* https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/handling-gestures/
-        https://reactnative.dev/docs/pressable
-         */}
         <FlatList
             data={currentList}
-            keyExtractor={(item, index) => item + index}
+            keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-            <SwipeToAction >
-            <View style={styles.item2}>
-                <Text>{item}</Text>
-            </View>
-            </SwipeToAction>
+              <SwipeRow
+                item={item}
+                onDelete={deleteItem}
+              />
             )}
             ItemSeparatorComponent={() => <View style={styles.separator2} />}
             contentInsetAdjustmentBehavior="never"
@@ -95,7 +110,13 @@ export default function Temp_List() {
                         key={option}
                         style={styles.option}
                         onPress={() => {
-                        setCurrentList(prev => [...prev, option]);
+                        setCurrentList(prev => [
+                          ...prev,
+                          {
+                            id: Date.now().toString(), // modern & safe
+                            goal: option,
+                          },
+                        ]);
                         }}
                     >
                         <Text>{option}</Text>
@@ -117,6 +138,7 @@ export default function Temp_List() {
             ))}
         </View>
     </SafeAreaView>
+    </GestureHandlerRootView>
     </>
     );  
 }
