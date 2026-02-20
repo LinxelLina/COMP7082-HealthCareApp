@@ -163,6 +163,7 @@ export default function HomeScreen() {
             <Button title="Charity Form" onPress={()=> router.push("/charity_form")}/>
             <Button title="Go to Profile" onPress={()=> router.push("/profile")}/>
             <Button title="Test Notification" onPress={notify}/>
+            <Button title="Goal Form" onPress={()=> router.push("/goal_form")}/>
           </View>
         <StatusBar style="auto" />
       </SafeAreaView>

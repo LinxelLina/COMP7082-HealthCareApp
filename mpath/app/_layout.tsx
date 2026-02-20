@@ -17,10 +17,11 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        <Stack.Screen name="index" options={{title: "Home"}} />
+        {/* <Stack.Screen name="index" options={{title: "Home"}} /> */}
         <Stack.Screen name="profile" options={{title: "Profile"}} />
         <Stack.Screen name="temp_list" options={{title: "Temp_List"}} />
         <Stack.Screen name="charity_form" options={{title: "Charity Form"}} />
+        <Stack.Screen name="goal_form" options={{title: "Goal Form"}} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
