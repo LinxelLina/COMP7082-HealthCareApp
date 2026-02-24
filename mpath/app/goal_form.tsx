@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Picker } from "@react-native-picker/picker";
-import { View, Text, TextInput, StyleSheet, Button } from "react-native";
+import { View, Text, TextInput, StyleSheet, Button, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Checkbox } from 'expo-checkbox';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { supabase } from "@/utils/supabase";
 
 type GoalForm = {
     goal: string;
@@ -13,9 +14,9 @@ type GoalForm = {
     isComplete: boolean;
 }
 type GoalFormProps = {
-  onSubmit: (form: GoalForm) => void;
+  onSubmit?: (form: GoalForm) => void;
 };
-export default function GoalForm({onSubmit}: GoalFormProps) {
+export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
     const [form, setForm] = useState<GoalForm>({
         goal: "",
         category: "",
@@ -28,10 +29,34 @@ export default function GoalForm({onSubmit}: GoalFormProps) {
     const onChange = (event:any, selectedDate:any) => {
       const currentDate = selectedDate;
       setDate(currentDate);
+      setForm(prev => ({ ...prev, duration: currentDate ?? prev.duration }));
     };
 
-    function onSubmitHandler(){
+    async function onSubmitHandler(){
+        if (!form.goal.trim()) {
+          Alert.alert("Missing goal", "Please enter a goal.");
+          return;
+        }
+
+        const { error } = await supabase
+          .from("goals")
+          .insert([
+            {
+              title: form.goal.trim(),
+              description: `Target date: ${form.duration.toISOString()}`,
+              category: form.category || "other",
+              is_habit: form.newHabit,
+              is_completed: form.isComplete,
+            },
+          ]);
+
+        if (error) {
+          Alert.alert("Save failed", error.message);
+          return;
+        }
+
         onSubmit(form);
+        Alert.alert("Saved", "Goal was added to Supabase.");
     }
 
     return (
