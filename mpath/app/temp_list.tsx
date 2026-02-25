@@ -1,9 +1,10 @@
-import {useState } from "react";
+import {useEffect, useState } from "react";
 import { View, Text, StyleSheet, FlatList, Button, Pressable, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import  SwipeRow from "./swipableComponent";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import GoalForm from "./goal_form";
+import DropDownPicker from "react-native-dropdown-picker";
 
     type Habit = {
       id: string;
@@ -13,6 +14,7 @@ import GoalForm from "./goal_form";
       duration: Date;
       isComplete: boolean;
     };
+
     type GoalForm = {
       goal: string;
       category: string;
@@ -20,6 +22,7 @@ import GoalForm from "./goal_form";
       duration: Date;
       isComplete: boolean;
     }
+    
     const temp_list: Habit[]=
     [
       { id: "1", goal: "Drink more water", category: "Food", newHabit: true, duration: new Date(), isComplete: false },
@@ -41,15 +44,42 @@ import GoalForm from "./goal_form";
 
 export default function Temp_List() {
     const [currentList, setCurrentList] = useState<Habit[]>(temp_list);
+    const [visibleList, setVisibleList] = useState<Habit[]>(temp_list);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-    const [inputValue, setInputValue] = useState("");   
     const [openNewHabitForm, setOpenNewHabitForm] = useState(false);
+    const [isOpen, setOpen] = useState(false);
+    const [value, setValue] = useState(null);
+    const [items, setItems] = useState([
+      {label: 'All', value: 'All'},
+      {label: 'Food', value: 'Food'},
+      {label: 'Fitness', value: 'Fitness'},
+      {label: 'Mental Health', value: 'Mental_Health'},
+      {label: 'Social', value: 'Social'},
+      {label: 'Study', value: 'Study'},
+      {label: 'Sleep', value: 'Sleep'},
+      {label: 'Other', value: 'Other'}
+    ]);
 
+    const filterList = value === "All" || value === null ? currentList : currentList.filter(item => item.category === value);
+
+    useEffect(() => {
+      if(value === "All" || value === null) {
+        setVisibleList(currentList);
+      } else {
+        setVisibleList(filterList);
+      }
+    }, [value]);
+
+    useEffect(() => {
+      setVisibleList(currentList);
+    }, [currentList]);
+    
     const deleteItem = (id: string) => {
       setCurrentList(prev =>
         prev.filter(item => item.id !== id)
       );
     };
+
 
     const toggleComplete = (id: string) => {
       setCurrentList(prev =>
@@ -63,48 +93,67 @@ export default function Temp_List() {
     <>
     <GestureHandlerRootView style={{ flex: 1, position: "relative" }}>
     <SafeAreaView style={styles.container}>
-      <Button title="Add New Habit" onPress={() => setOpenNewHabitForm(!openNewHabitForm)}/>
+
+        <DropDownPicker
+          open={isOpen}
+          value={value}
+          items={items}
+          setOpen={setOpen}
+          setValue={setValue}
+          setItems={setItems}
+          placeholder="Select category"
+          disabled={openNewHabitForm}
+          zIndexInverse={1000}
+          zIndex={1000}
+          style={{ borderColor: "#ccc", opacity: openNewHabitForm ? 0.5 : 1}}
+          
+        />
+
         {openNewHabitForm && (
-          <Pressable
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.3)', // dim background
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 1000,
-            }}
-            onPress={() => setOpenNewHabitForm(false)} // close if pressed outside
-          >
-              <Pressable
-                style={{
-                  width: '90%',
-                  height: '80%',
-                  backgroundColor: 'white',
-                  borderRadius: 16,
-                  padding: 16,
-                }}
-                onPress={() => {}}
-              >
-                <GoalForm onSubmit={(form:GoalForm) => {
-                  setCurrentList(prev => [
-                    ...prev,
-                    {
-                      id: Date.now().toString(), // modern & safe
-                      ...form,
-                    },
-                  ]);
-                  setOpenNewHabitForm(false);
-                }}/>
-              </Pressable>
-          </Pressable>
+            <Pressable
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 1000,
+              }}
+              onPress={() => setOpenNewHabitForm(false)} 
+            >
+                <Pressable
+                  style={{
+                    width: '90%',
+                    height: '80%',
+                    backgroundColor: 'white',
+                    borderRadius: 16,
+                    padding: 16,
+                  }}
+                  onPress={() => {}}
+                >
+                  <GoalForm onSubmit={(form:GoalForm) => {
+                    console.log(form);
+                    setCurrentList(prev => [
+                      ...prev,
+                      {
+                        id: Date.now().toString(), // modern & safe
+                        ...form,
+                      },
+                    ]);
+                    if(form.newHabit) {
+                      OPTIONS[form.category as Category].push(form.goal);
+                    }
+                    setOpenNewHabitForm(false);
+                  }}/>
+                </Pressable>
+            </Pressable>
         )}
 
         <FlatList
-            data={currentList}
+            data={visibleList}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <Pressable onLongPress={() => toggleComplete(item.id)}>
@@ -141,7 +190,7 @@ export default function Temp_List() {
                         setCurrentList(prev => [
                           ...prev,
                           {
-                            id: Date.now().toString(), // modern & safe
+                            id: Date.now().toString(), //temporary id generation, will change to something more robust later maybe when implementing database
                             goal: option,
                             newHabit: true,
                             duration: new Date(),
@@ -157,6 +206,9 @@ export default function Temp_List() {
                 </Pressable>
             </Pressable>
         </Modal>
+
+        <Button title="Add New Habit" onPress={() => {setOpen(false);
+          setOpenNewHabitForm(!openNewHabitForm);}}/>
 
         <View style={styles.categoryBar}>
             {Object.keys(OPTIONS).map((category) => (

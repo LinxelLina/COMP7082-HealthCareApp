@@ -50,13 +50,13 @@ export default function GoalForm({onSubmit}: GoalFormProps) {
         />
         <Picker selectedValue={form.category} onValueChange={(value) => setForm({...form, category:value})}>
             <Picker.Item label="Select a category" value="" />
-            <Picker.Item label="Food" value="food" />
-            <Picker.Item label="Fitness" value="fitness" />
-            <Picker.Item label="Mental" value="mental" />
-            <Picker.Item label="Social" value="social" />
-            <Picker.Item label="Study" value="study" />
-            <Picker.Item label="Sleep" value="sleep" />
-            <Picker.Item label="Other" value="other" />
+            <Picker.Item label="Food" value="Food" />
+            <Picker.Item label="Fitness" value="Fitness" />
+            <Picker.Item label="Mental Health" value="Mental_Health" />
+            <Picker.Item label="Social" value="Social" />
+            <Picker.Item label="Study" value="Study" />
+            <Picker.Item label="Sleep" value="Sleep" />
+            <Picker.Item label="Other" value="Other" />
         </Picker>
 
         <View style={styles.section}>
@@ -99,6 +99,8 @@ const styles = StyleSheet.create({
     container: {
     flex: 1,
     backgroundColor: "#fff",
+    zIndex: 9999,
+    elevation:9999,
   },
   categoryList:{
     flex:1,
