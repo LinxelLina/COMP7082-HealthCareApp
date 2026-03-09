@@ -27,11 +27,14 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
         isComplete: false,
     });
     const [date, setDate] = useState(new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
     const onChange = (event:any, selectedDate:any) => {
-      const currentDate = selectedDate;
-      setDate(currentDate);
-      setForm(prev => ({ ...prev, duration: currentDate ?? prev.duration }));
+      if (event?.type === "set" && selectedDate) {
+        setDate(selectedDate);
+        setForm(prev => ({ ...prev, duration: selectedDate }));
+      }
+      setShowDatePicker(false);
     };
 
 
@@ -129,24 +132,24 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
           <Text>Keep this goal in your lists?</Text>
         </View>
         <View style={styles.section}>
-          <Checkbox style={styles.checkbox} value={form.hasDuration} onValueChange={(value) => setForm({...form, hasDuration:value})} />
+          <Checkbox
+            style={styles.checkbox}
+            value={form.hasDuration}
+            onValueChange={(value) => {
+              setForm({...form, hasDuration:value});
+              setShowDatePicker(value);
+            }}
+          />
         <Text>Set target date?</Text>
         </View>
          <View style={styles.section}>
-        <DateTimePicker
+        {showDatePicker && <DateTimePicker
           testID="dateTimePicker"
           value={date}
           mode={"date"}
           is24Hour={true}
           onChange={onChange}
-        />
-        <DateTimePicker
-          testID="dateTimePicker"
-          value={date}
-          mode={"time"}
-          is24Hour={true}
-          onChange={onChange}
-        />
+        />}
         </View>
         <Text>selected: {date.toLocaleString()}</Text>
 

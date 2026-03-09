@@ -271,7 +271,7 @@ export default function goal_list() {
                         start_date: new Date(),
                       },
                     ]);
-                    if(form.newHabit) {
+                    if (form.newHabit && form.category in OPTIONS) {
                       OPTIONS[form.category as Category].push(form.goal);
                     }
                     setOpenNewHabitForm(false);
