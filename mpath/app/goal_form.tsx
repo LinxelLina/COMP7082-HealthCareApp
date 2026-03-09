@@ -52,41 +52,46 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
           Alert.alert("Invalid duration", "Target date cannot be more than a year in the future.");
           return;
         }
-        if(form.hasDuration){
-        const { error } = await supabase
-          .from("goals")
-          .insert([
-            {
-              title: form.goal.trim(),
-              description: `Target date: ${form.duration.toISOString()}`,
-              category: form.category || "other",
-              duration_date: form.duration.toISOString(),
-              is_habit: form.newHabit,
-              is_completed: form.isComplete,
-            },
-          ]);
-
-          if (error) {
-            Alert.alert("Save failed", error.message);
-            return;
-          }
-        }else{
+        try {
+          if(form.hasDuration){
           const { error } = await supabase
-          .from("goals")
-          .insert([
-            {
-              title: form.goal.trim(),
-              description: `Target date: ${form.duration.toISOString()}`,
-              category: form.category || "other",
-              is_habit: form.newHabit,
-              is_completed: form.isComplete,
-            },
-          ]);
+            .from("goals")
+            .insert([
+              {
+                title: form.goal.trim(),
+                description: `Target date: ${form.duration.toISOString()}`,
+                category: form.category || "other",
+                duration_date: form.duration.toISOString(),
+                is_habit: form.newHabit,
+                is_completed: form.isComplete,
+              },
+            ]);
 
             if (error) {
               Alert.alert("Save failed", error.message);
               return;
             }
+          }else{
+            const { error } = await supabase
+            .from("goals")
+            .insert([
+              {
+                title: form.goal.trim(),
+                description: `Target date: ${form.duration.toISOString()}`,
+                category: form.category || "other",
+                is_habit: form.newHabit,
+                is_completed: form.isComplete,
+              },
+            ]);
+
+              if (error) {
+                Alert.alert("Save failed", error.message);
+                return;
+              }
+          }
+        } catch (error: any) {
+          Alert.alert("Save failed", error?.message || "Unexpected database error.");
+          return;
         }
 
         onSubmit(form);
