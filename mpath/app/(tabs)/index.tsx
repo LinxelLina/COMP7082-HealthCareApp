@@ -208,11 +208,12 @@ export default function HomeScreen() {
               fontWeight: "bold",
               }}
             >Home</Text>
-            <Button title="List" onPress={()=> router.push("/temp_list")}/>
+            <Button title="List" onPress={()=> router.push("/goal_list")}/>
             <Button title="Charity Form" onPress={()=> router.push("/charity_form")}/>
             <Button title="Go to Profile" onPress={()=> router.push("/profile")}/>
             <Button title="Test Notification" onPress={notify}/>
-            <Button title="Goal Form" onPress={()=> router.push("/goal_form")}/>
+            <Button title="Charity List" onPress={()=> router.push("/charity_list")}/>
+            <Button title="Charity Graph" onPress={()=>router.push("/charity_graph")}/>
             <Button title="Test Supabase (insert + select)" onPress={testSupabase} />
           </View>
         <StatusBar style="auto" />

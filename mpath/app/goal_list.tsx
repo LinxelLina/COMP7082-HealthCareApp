@@ -1,33 +1,38 @@
-import {useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, Button, Pressable, Modal } from "react-native";
+import {use, useEffect, useState } from "react";
+import { View, Text, StyleSheet, FlatList, Button, Pressable, Modal, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import  SwipeRow from "./swipableComponent";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import GoalForm from "./goal_form";
 import DropDownPicker from "react-native-dropdown-picker";
+import { supabase } from "@/utils/supabase";
 
     type Habit = {
       id: string;
       goal: string;
       category: string;
       newHabit: boolean;
+      start_date: Date;
+      hasDuration: boolean;
       duration: Date;
       isComplete: boolean;
     };
+
 
     type GoalForm = {
       goal: string;
       category: string;
       newHabit: boolean;
+      hasDuration: boolean;
       duration: Date;
       isComplete: boolean;
     }
-    
-    const temp_list: Habit[]=
+      
+    const temp_goal_list: Habit[]=
     [
-      { id: "1", goal: "Drink more water", category: "Food", newHabit: true, duration: new Date(), isComplete: false },
-      { id: "2", goal: "Eat more food", category: "Food", newHabit: true, duration: new Date(), isComplete: false },
-      { id: "3", goal: "Feed the fish", category: "Other", newHabit: true, duration: new Date(), isComplete: false },
+      { id: "1", goal: "Drink more water", category: "Food", newHabit: true, hasDuration: false, duration: new Date(), isComplete: false, start_date: new Date() },
+      { id: "2", goal: "Eat more food", category: "Food", newHabit: true, hasDuration: false, duration: new Date(), isComplete: false, start_date: new Date() },
+      { id: "3", goal: "Feed the fish", category: "Other", newHabit: true, hasDuration: false, duration: new Date(), isComplete: false, start_date: new Date() },
     ];
 
     type Category = "Food" | "Fitness" | "Mental_Health" | "Social" | "Study" | "Sleep" | "Other";
@@ -42,9 +47,9 @@ import DropDownPicker from "react-native-dropdown-picker";
         Other: ["Practice a hobby", "Learn something new", "Organize your space", "Set goals for the week", "Reflect on your day","test","test2","test4"]
     }
 
-export default function Temp_List() {
-    const [currentList, setCurrentList] = useState<Habit[]>(temp_list);
-    const [visibleList, setVisibleList] = useState<Habit[]>(temp_list);
+export default function goal_list() {
+    const [currentList, setCurrentList] = useState<Habit[]>([]);
+    const [visibleList, setVisibleList] = useState<Habit[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [openNewHabitForm, setOpenNewHabitForm] = useState(false);
     const [isOpen, setOpen] = useState(false);
@@ -62,6 +67,80 @@ export default function Temp_List() {
 
     const filterList = value === "All" || value === null ? currentList : currentList.filter(item => item.category === value);
 
+    const getRemainingTime = (endDate: string) => {
+      const diff = new Date(endDate).getTime() - Date.now();
+
+      if (diff <= 0) return "Expired";
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+
+      return `${hours}h ${minutes}m`;
+    };
+    useEffect(() => { //get goals from database,
+      const fetchData = async () => {
+        const { data, error } = await supabase
+          .from('goals')
+          .select('*');
+        
+        if (error) {
+          console.error('Error fetching goals:', error);
+        } 
+
+        const mappedData = data?.map((goal: any) => ({
+          id: goal.goal_id.toString(),
+          goal: goal.title,
+          category: goal.category ?? "Other",
+          newHabit: goal.is_habit ?? false,
+          start_date: goal.created_at ? new Date(goal.created_at) : new Date(),
+          hasDuration: goal.duration_date != null,
+          duration: goal.duration_date ? new Date(goal.duration_date) : new Date(),
+          isComplete: goal.is_completed ?? false,
+        }));
+        // console.log(mappedData);
+        //delete goals that have expired and are marked as complete, append remaining time to goals that have expired but are not marked as complete, and append remaining time to goals that have a duration
+        for (const goal of mappedData || []) {
+          if (goal.hasDuration) {
+            const remainingTime = getRemainingTime(goal.duration.toISOString());
+            if(remainingTime === "Expired" && goal.isComplete) {
+              const {error} = await supabase
+                  .from('goals')
+                  .delete()
+                  .eq('goal_id', goal.id)
+  
+                  if (error) {
+                    console.error('Error deleting goal:', error);
+                  };
+            }else if (remainingTime === "Expired" && !goal.isComplete) {
+              goal.goal += " (Expired)";
+            }else {
+              goal.goal += ` (${remainingTime} remaining)`;
+            }
+          }
+        }
+          // delete goals a day old that don't have durations
+        const oneDay = 24 * 60 * 60 * 1000;
+        for (const goal of mappedData || []) {
+          if (!goal.hasDuration && goal.isComplete) {
+            const createdAt = new Date(goal.start_date);
+            if (Date.now() - createdAt.getTime() > oneDay){
+              const {error} = await supabase
+                .from('goals')
+                .delete()
+                .eq('goal_id', goal.id)
+
+                if (error) {
+                  console.error('Error deleting goal:', error);
+                };
+            }
+          }  
+        }
+
+        setCurrentList(mappedData || []);
+      };
+      fetchData();
+    },[]);
+
     useEffect(() => {
       if(value === "All" || value === null) {
         setVisibleList(currentList);
@@ -70,24 +149,72 @@ export default function Temp_List() {
       }
     }, [value]);
 
-    useEffect(() => {
+  useEffect(() => {
       setVisibleList(currentList);
     }, [currentList]);
     
     const deleteItem = (id: string) => {
+      Alert.alert(
+        "Delete Habit",
+        "Are you sure you want to delete this habit?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: () => {
+              supabase
+                .from('goals')
+                .delete()
+                .eq('goal_id', id)
+                .then(({ error }) => {
+                  if (error) {
+                    console.error('Error deleting goal:', error);
+                  }
+                });
+            }
+          }
+        ]
+      );
       setCurrentList(prev =>
         prev.filter(item => item.id !== id)
       );
     };
 
 
-    const toggleComplete = (id: string) => {
+    const toggleComplete = async (id: string) => {
+      const {error} = await supabase        
+        .from('goals')
+        .update({ is_completed: !currentList.find(item => item.id === id)?.isComplete })
+        .eq('goal_id', id);
+
       setCurrentList(prev =>
         prev.map(item =>
           item.id === id ? { ...item, isComplete: !item.isComplete } : item
         )
       );
     };
+
+    async function addCategoryGoalsToDatabase(category: Category, goal: string) {
+      console.log(category, goal);
+      const { error } = await supabase
+        .from("goals")
+        .insert([
+          {
+            title: goal.trim(),
+            description: `Added from category selection: ${category}`,
+            category: category,
+            is_habit: false,
+            is_completed: false,
+          },
+        ]);
+      if (error) { 
+        Alert.alert("Save failed", error.message);
+      };
+    }
 
     return (
     <>
@@ -141,6 +268,7 @@ export default function Temp_List() {
                       {
                         id: Date.now().toString(), // modern & safe
                         ...form,
+                        start_date: new Date(),
                       },
                     ]);
                     if(form.newHabit) {
@@ -193,11 +321,14 @@ export default function Temp_List() {
                             id: Date.now().toString(), //temporary id generation, will change to something more robust later maybe when implementing database
                             goal: option,
                             newHabit: true,
+                            hasDuration: false,
                             duration: new Date(),
                             isComplete: false,
+                            start_date: new Date(),
                             category: selectedCategory,
                           },
                         ]);
+                          addCategoryGoalsToDatabase(selectedCategory, option);
                         }}
                     >
                         <Text>{option}</Text>

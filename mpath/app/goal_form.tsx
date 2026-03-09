@@ -10,6 +10,7 @@ type GoalForm = {
     goal: string;
     category: string;
     newHabit: boolean;
+    hasDuration: boolean;
     duration: Date;
     isComplete: boolean;
 }
@@ -21,6 +22,7 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
         goal: "",
         category: "",
         newHabit: false,
+        hasDuration: false,
         duration: new Date(),
         isComplete: false,
     });
@@ -32,13 +34,44 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
       setForm(prev => ({ ...prev, duration: currentDate ?? prev.duration }));
     };
 
+
     async function onSubmitHandler(){
         if (!form.goal.trim()) {
           Alert.alert("Missing goal", "Please enter a goal.");
           return;
         }
-
+        if(form.hasDuration && !form.duration){
+          Alert.alert("Missing duration", "Please select a target date.");
+          return;
+        }
+        if(form.hasDuration && form.duration < new Date()){
+          Alert.alert("Invalid duration", "Target date cannot be in the past.");
+          return;
+        }
+        if(form.hasDuration && form.duration > new Date(Date.now() + 365*24*60*60*1000)){
+          Alert.alert("Invalid duration", "Target date cannot be more than a year in the future.");
+          return;
+        }
+        if(form.hasDuration){
         const { error } = await supabase
+          .from("goals")
+          .insert([
+            {
+              title: form.goal.trim(),
+              description: `Target date: ${form.duration.toISOString()}`,
+              category: form.category || "other",
+              duration_date: form.duration.toISOString(),
+              is_habit: form.newHabit,
+              is_completed: form.isComplete,
+            },
+          ]);
+
+          if (error) {
+            Alert.alert("Save failed", error.message);
+            return;
+          }
+        }else{
+          const { error } = await supabase
           .from("goals")
           .insert([
             {
@@ -50,14 +83,16 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
             },
           ]);
 
-        if (error) {
-          Alert.alert("Save failed", error.message);
-          return;
+            if (error) {
+              Alert.alert("Save failed", error.message);
+              return;
+            }
         }
 
         onSubmit(form);
         Alert.alert("Saved", "Goal was added to Supabase.");
     }
+
 
     return (
     <>
@@ -87,6 +122,10 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
         <View style={styles.section}>
           <Checkbox style={styles.checkbox} value={form.newHabit} onValueChange={(value) => setForm({...form, newHabit:value})} />
           <Text>Keep this goal in your lists?</Text>
+        </View>
+        <View style={styles.section}>
+          <Checkbox style={styles.checkbox} value={form.hasDuration} onValueChange={(value) => setForm({...form, hasDuration:value})} />
+        <Text>Set target date?</Text>
         </View>
          <View style={styles.section}>
         <DateTimePicker
