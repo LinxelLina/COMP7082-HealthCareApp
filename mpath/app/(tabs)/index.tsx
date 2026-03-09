@@ -1,27 +1,18 @@
-import { Image } from 'expo-image';
-// import { Button, Platform, Pressable, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-// import { Link } from 'expo-router';
 // Controls the appearance of the users status bar
 import { StatusBar } from "expo-status-bar";
 
 // useEffect to test supabase on button press
-import React, {useEffect} from "react";
+import React from "react";
 import { supabase } from "@/utils/supabase";
 
 // expo's built-in functionality for notifications
 import * as Notifications from "expo-notifications";
 
 //added platform for notifications, logbox for ignoring notification error banner XD
-import { StyleSheet, Button, Pressable, Text, View, Platform, LogBox } from "react-native";
+import { StyleSheet, Button, Text, View, Platform, LogBox } from "react-native";
 // Keeps the app from overlapping with statusbar
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, Tabs, Link, router } from 'expo-router';
+import { router } from 'expo-router';
 
 
 
@@ -183,39 +174,30 @@ export default function HomeScreen() {
     // </ParallaxScrollView>
         // "View" is basically HTML <div>
   <>
-    <SafeAreaView
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text
-        style={{
-          color: "green",
-          fontSize: 32,
-          fontWeight: "bold",
-        }}
-      >
-        M-Path
-      </Text>
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.appTitle}>M-Path</Text>
       {/* Start button to get to home page. May eventually add login system */}
-        <View>
-          <Text
-              style={{
-              color: "green",
-              fontSize: 32,
-              fontWeight: "bold",
-              }}
-            >Home</Text>
-            <Button title="List" onPress={()=> router.push("/goal_list")}/>
-            <Button title="Charity Form" onPress={()=> router.push("/charity_form")}/>
-            <Button title="Go to Profile" onPress={()=> router.push("/profile")}/>
-            <Button title="Test Notification" onPress={notify}/>
-            <Button title="Charity List" onPress={()=> router.push("/charity_list")}/>
-            <Button title="Charity Graph" onPress={()=>router.push("/charity_graph")}/>
-            <Button title="Test Supabase (insert + select)" onPress={testSupabase} />
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Home</Text>
+          <View style={styles.buttonGroup}>
+            <View style={styles.buttonRow}>
+              <Button color="#2e7d32" title="List" onPress={() => router.push("/goal_list")} />
+            </View>
+            <View style={styles.buttonRow}>
+              <Button color="#2e7d32" title="Charity Form" onPress={() => router.push("/charity_form")} />
+            </View>
+            <View style={styles.buttonRow}>
+              <Button color="#2e7d32" title="Go to Profile" onPress={() => router.push("/profile")} />
+            </View>
+
+            <View style={styles.buttonRow}>
+              <Button color="#2e7d32" title="Charity List" onPress={() => router.push("/charity_list")} />
+            </View>
+            <View style={styles.buttonRow}>
+              <Button color="#2e7d32" title="Charity Graph" onPress={() => router.push("/charity_graph")} />
+            </View>
           </View>
+        </View>
         <StatusBar style="auto" />
       </SafeAreaView>
     </>
@@ -224,20 +206,39 @@ export default function HomeScreen() {
 
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    backgroundColor: "#f4f6f8",
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  appTitle: {
+    color: "#2e7d32",
+    fontSize: 34,
+    fontWeight: "700",
+    marginBottom: 18,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  card: {
+    width: "100%",
+    maxWidth: 380,
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#dfe6e9",
+  },
+  sectionTitle: {
+    color: "#2f3e46",
+    fontSize: 26,
+    fontWeight: "700",
+    marginBottom: 14,
+    textAlign: "center",
+  },
+  buttonGroup: {
+    width: "100%",
+  },
+  buttonRow: {
+    marginBottom: 10,
   },
 });
