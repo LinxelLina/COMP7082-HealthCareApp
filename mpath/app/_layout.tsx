@@ -24,6 +24,7 @@ export default function RootLayout() {
         <Stack.Screen name="charity_list" options={{title: "Charity List"}} />
         <Stack.Screen name="charity_graph" options={{title: "Charity Graph"}}/>
         <Stack.Screen name="goal_form" options={{title: "Goal Form"}} />
+        <Stack.Screen name="ad_video" options={{ title: "Ad Video" }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

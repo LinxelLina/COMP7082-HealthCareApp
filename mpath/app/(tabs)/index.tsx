@@ -196,6 +196,9 @@ export default function HomeScreen() {
             <View style={styles.buttonRow}>
               <Button color="#2e7d32" title="Charity Graph" onPress={() => router.push("/charity_graph")} />
             </View>
+            <View style={styles.buttonRow}>
+              <Button color="#2e7d32" title="Test Ad Video" onPress={() => router.push("/ad_video")} />
+            </View>
           </View>
         </View>
         <StatusBar style="auto" />
