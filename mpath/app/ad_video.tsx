@@ -1,5 +1,6 @@
 import { ResizeMode, Video } from "expo-av";
-import { StyleSheet, View } from "react-native";
+import { router } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function AdVideoScreen() {
   return (
@@ -12,6 +13,9 @@ export default function AdVideoScreen() {
         isLooping
         shouldPlay
       />
+      <Pressable style={styles.skipButton} onPress={() => router.replace("/(tabs)")}>
+        <Text style={styles.skipText}>Skip</Text>
+      </Pressable>
     </View>
   );
 }
@@ -23,5 +27,18 @@ const styles = StyleSheet.create({
   },
   video: {
     flex: 1,
+  },
+  skipButton: {
+    position: "absolute",
+    top: 48,
+    right: 16,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  skipText: {
+    color: "#fff",
+    fontWeight: "600",
   },
 });
