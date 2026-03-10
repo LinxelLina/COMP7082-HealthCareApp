@@ -159,7 +159,10 @@ export default function goal_list() {
     }, [value]);
 
   useEffect(() => {
-      setVisibleList(currentList);
+      // const sortedList = [...currentList].sort((a, b) =>  Number(a.isComplete) - Number(b.isComplete));
+      // sortedList.sort((a, b) => {return a.goal.localeCompare(b.goal)});
+      const sortedList = [...currentList].sort((a, b) => { return (Number(a.isComplete) - Number(b.isComplete)) || a.goal.localeCompare(b.goal)});
+      setVisibleList(sortedList);
     }, [currentList]);
     
     const deleteItem = (id: string) => {
