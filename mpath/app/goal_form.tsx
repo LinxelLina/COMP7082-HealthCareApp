@@ -13,6 +13,9 @@ type GoalForm = {
     hasDuration: boolean;
     duration: Date;
     isComplete: boolean;
+    isMilestone: boolean;
+    milestoneType: "" | "streak" | "count";
+    milestoneTarget: number;
 }
 type GoalFormProps = {
   onSubmit?: (form: GoalForm) => void;
@@ -25,6 +28,9 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
         hasDuration: false,
         duration: new Date(),
         isComplete: false,
+        isMilestone: false,
+        milestoneType: "",
+        milestoneTarget: 0,
     });
     const [date, setDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -55,6 +61,17 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
           Alert.alert("Invalid duration", "Target date cannot be more than a year in the future.");
           return;
         }
+        if (form.isMilestone && !form.milestoneType) {
+          Alert.alert("Missing milestone type", "Please choose a milestone type.");
+          return;
+        }
+        if (form.isMilestone && (!Number.isFinite(form.milestoneTarget) || form.milestoneTarget <= 0)) {
+          Alert.alert("Invalid milestone target", "Please enter a milestone target greater than 0.");
+          return;
+        }
+        const milestoneText = form.isMilestone
+          ? ` | Milestone: ${form.milestoneType}:${form.milestoneTarget}`
+          : "";
         try {
           if(form.hasDuration){
           const { error } = await supabase
@@ -62,7 +79,7 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
             .insert([
               {
                 title: form.goal.trim(),
-                description: `Target date: ${form.duration.toISOString()}`,
+                description: `Target date: ${form.duration.toISOString()}${milestoneText}`,
                 category: form.category || "other",
                 duration_date: form.duration.toISOString(),
                 is_habit: form.newHabit,
@@ -80,7 +97,7 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
             .insert([
               {
                 title: form.goal.trim(),
-                description: `Target date: ${form.duration.toISOString()}`,
+                description: `Target date: ${form.duration.toISOString()}${milestoneText}`,
                 category: form.category || "other",
                 is_habit: form.newHabit,
                 is_completed: form.isComplete,
@@ -131,6 +148,39 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
           <Checkbox style={styles.checkbox} value={form.newHabit} onValueChange={(value) => setForm({...form, newHabit:value})} />
           <Text>Keep this goal in your lists?</Text>
         </View>
+        <View style={styles.section}>
+          <Checkbox
+            style={styles.checkbox}
+            value={form.isMilestone}
+            onValueChange={(value) => setForm({...form, isMilestone:value})}
+          />
+          <Text>Enable milestone?</Text>
+        </View>
+        {form.isMilestone && (
+          <>
+            <Picker
+              selectedValue={form.milestoneType}
+              onValueChange={(value) => setForm({...form, milestoneType:value})}
+            >
+              <Picker.Item label="Select milestone type" value="" />
+              <Picker.Item label="Streak" value="streak" />
+              <Picker.Item label="Count" value="count" />
+            </Picker>
+            <TextInput
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                padding: 10,
+                marginHorizontal: 16,
+                marginBottom: 8,
+              }}
+              value={form.milestoneTarget ? String(form.milestoneTarget) : ""}
+              onChangeText={(text) => setForm({...form, milestoneTarget: parseInt(text, 10) || 0})}
+              keyboardType="numeric"
+              placeholder="Milestone target"
+            />
+          </>
+        )}
         <View style={styles.section}>
           <Checkbox
             style={styles.checkbox}
