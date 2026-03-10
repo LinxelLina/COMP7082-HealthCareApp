@@ -69,9 +69,6 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
           Alert.alert("Invalid milestone target", "Please enter a milestone target greater than 0.");
           return;
         }
-        const milestoneText = form.isMilestone
-          ? ` | Milestone: ${form.milestoneType}:${form.milestoneTarget}`
-          : "";
         try {
           if(form.hasDuration){
           const { error } = await supabase
@@ -79,11 +76,14 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
             .insert([
               {
                 title: form.goal.trim(),
-                description: `Target date: ${form.duration.toISOString()}${milestoneText}`,
+                description: `Target date: ${form.duration.toISOString()}`,
                 category: form.category || "other",
                 duration_date: form.duration.toISOString(),
                 is_habit: form.newHabit,
                 is_completed: form.isComplete,
+                is_milestone: form.isMilestone,
+                milestone_type: form.isMilestone ? form.milestoneType : null,
+                milestone_target: form.isMilestone ? form.milestoneTarget : null,
               },
             ]);
 
@@ -97,10 +97,13 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
             .insert([
               {
                 title: form.goal.trim(),
-                description: `Target date: ${form.duration.toISOString()}${milestoneText}`,
+                description: "",
                 category: form.category || "other",
                 is_habit: form.newHabit,
                 is_completed: form.isComplete,
+                is_milestone: form.isMilestone,
+                milestone_type: form.isMilestone ? form.milestoneType : null,
+                milestone_target: form.isMilestone ? form.milestoneTarget : null,
               },
             ]);
 
