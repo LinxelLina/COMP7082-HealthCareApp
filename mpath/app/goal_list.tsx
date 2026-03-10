@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import GoalForm from "./goal_form";
 import DropDownPicker from "react-native-dropdown-picker";
 import { supabase } from "@/utils/supabase";
+import { router } from "expo-router";
 
     type Habit = {
       id: string;
@@ -284,7 +285,21 @@ export default function goal_list() {
             data={visibleList}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <Pressable onLongPress={() => toggleComplete(item.id)}>
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: "/goal_detail",
+                    params: {
+                      title: item.goal,
+                      category: item.category,
+                      is_habit: String(item.newHabit),
+                      is_completed: String(item.isComplete),
+                      duration_date: item.hasDuration ? item.duration.toISOString() : "",
+                    },
+                  })
+                }
+                onLongPress={() => toggleComplete(item.id)}
+              >
                 <SwipeRow
                   item={item}
                   onDelete={deleteItem}
