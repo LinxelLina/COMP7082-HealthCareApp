@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -8,6 +8,7 @@ import {
   addWeeks,
   formatWeekRange,
 } from "@/utils/week";
+import { supabase } from "@/utils/supabase";
 
 /* ---------- UI helpers ---------- */
 function Button({
@@ -116,6 +117,57 @@ function Row({
 }
 
 /* ---------- screen ---------- */
+type MilestoneGoal = {
+  goal_id: string;
+  title: string;
+  milestone_type: string | null;
+  milestone_target: number | null;
+  duration_date: string | null;
+  created_at: string | null;
+};
+
+function getMilestoneProgress(goal: MilestoneGoal): number | null {
+  if (!goal.duration_date) return null;
+
+  const nowMs = Date.now();
+  const targetMs = new Date(goal.duration_date).getTime();
+  const startMs = goal.created_at ? new Date(goal.created_at).getTime() : NaN;
+
+  if (Number.isNaN(targetMs)) return null;
+
+  // Fallback when start date is missing/invalid.
+  if (Number.isNaN(startMs) || targetMs <= startMs) {
+    return nowMs >= targetMs ? 100 : 0;
+  }
+
+  const rawProgress = ((nowMs - startMs) / (targetMs - startMs)) * 100;
+  return Math.max(0, Math.min(100, rawProgress));
+}
+
+function getMilestoneSubtext(goal: MilestoneGoal, progressPercent: number | null): string | undefined {
+  if (goal.milestone_type && progressPercent !== null) {
+    return `Type: ${goal.milestone_type} • ${Math.round(progressPercent)}%`;
+  }
+  if (goal.milestone_type) {
+    return `Type: ${goal.milestone_type}`;
+  }
+  if (progressPercent !== null) {
+    return `${Math.round(progressPercent)}%`;
+  }
+  return undefined;
+}
+
+function getRemainingHoursLabel(goal: MilestoneGoal): string | null {
+  if (!goal.duration_date) return null;
+
+  const targetMs = new Date(goal.duration_date).getTime();
+  if (Number.isNaN(targetMs)) return null;
+
+  const hoursLeft = Math.ceil((targetMs - Date.now()) / (1000 * 60 * 60));
+  if (hoursLeft <= 0) return "overdue";
+  return `${hoursLeft}h left`;
+}
+
 export default function SummaryScreen() {
   const insets = useSafeAreaInsets();
   const scheme = useColorScheme();
@@ -128,23 +180,32 @@ export default function SummaryScreen() {
 
   const [anchor, setAnchor] = useState(new Date());
   const weekStart = useMemo(() => startOfWeekMonday(anchor), [anchor]);
+  const [milestones, setMilestones] = useState<MilestoneGoal[]>([]);
 
-  const habitSummary = [
-    { name: "Gym", count: 3, goal: 4 },
-    { name: "Physio", count: 5, goal: 5 },
-    { name: "Walk 8k steps", count: 6, goal: 7 },
-  ];
+  useEffect(() => {
+    const fetchMilestones = async () => {
+      const { data, error } = await supabase
+        .from("goals")
+        .select("goal_id, title, milestone_type, milestone_target, duration_date, created_at")
+        .eq("is_milestone", true)
+        .order("created_at", { ascending: false });
 
-  const actionSummary = [
-    { name: "Study", count: 4, total: "6h 20m" },
-    { name: "Protein logged", count: 7, total: "875g" },
-    { name: "Water", count: 6, total: "14.0L" },
-  ];
+      if (error) {
+        console.error("Error fetching milestones:", error);
+        setMilestones([]);
+        return;
+      }
+
+      setMilestones((data as MilestoneGoal[]) || []);
+    };
+
+    fetchMilestones();
+  }, []);
 
   return (
     <ScrollView style={{ backgroundColor: background }}     contentContainerStyle={{
       paddingHorizontal: 16,
-      paddingTop: insets.top + 16,    
+      paddingTop: insets.top + 16,
       paddingBottom: insets.bottom + 24,
     }}
     >
@@ -162,34 +223,72 @@ export default function SummaryScreen() {
         <Button label="Next →" onPress={() => setAnchor(addWeeks(anchor, 1))} borderColor={border} textColor={textColor} />
       </View>
 
-      <Section title="Habits" borderColor={border} textColor={textColor}>
-        {habitSummary.map((h, i) => (
+      <Section title="Milestones" borderColor={border} textColor={textColor}>
+        {milestones.length === 0 ? (
           <Row
-            key={h.name}
-            left={h.name}
-            right={`${h.count}/${h.goal}`}
-            subLeft={`${Math.round((h.count / h.goal) * 100)}% of goal`}
-            isLast={i === habitSummary.length - 1}
+            left="No milestone goals yet"
+            right=""
+            isLast
             borderColor={border}
             textColor={textColor}
             muted={muted}
           />
-        ))}
-      </Section>
+        ) : (
+          milestones.map((m, i) => {
+            const progressPercent = getMilestoneProgress(m);
+            const subLeft = getMilestoneSubtext(m, progressPercent);
+            const remainingHoursLabel = getRemainingHoursLabel(m);
 
-      <Section title="Actions" borderColor={border} textColor={textColor}>
-        {actionSummary.map((a, i) => (
-          <Row
-            key={a.name}
-            left={a.name}
-            right={`${a.count}`}
-            subLeft={a.total}
-            isLast={i === actionSummary.length - 1}
-            borderColor={border}
-            textColor={textColor}
-            muted={muted}
-          />
-        ))}
+            return (
+              <View key={m.goal_id}>
+                <Row
+                  left={m.title}
+                  right={m.milestone_target != null ? `${m.milestone_target}` : "-"}
+                  subLeft={subLeft}
+                  isLast={false}
+                  borderColor={border}
+                  textColor={textColor}
+                  muted={muted}
+                />
+                {progressPercent !== null ? (
+                  <View>
+                    <Text style={{ marginHorizontal: 14, marginBottom: 4, fontSize: 13, color: muted }}>
+                      Progress: {m.title}
+                    </Text>
+                    <View style={{ marginHorizontal: 14, marginBottom: i === milestones.length - 1 ? 12 : 8, flexDirection: "row", alignItems: "center", gap: 8 }}>
+                      <View
+                        style={{
+                          height: 8,
+                          backgroundColor: `${border}33`,
+                          borderRadius: 999,
+                          overflow: "hidden",
+                          flex: 1,
+                        }}
+                      >
+                        <View
+                          style={{
+                            height: 8,
+                            width: `${progressPercent}%`,
+                            backgroundColor: textColor,
+                          }}
+                        />
+                      </View>
+                      {remainingHoursLabel && (
+                        <Text style={{ fontSize: 12, color: muted, fontWeight: "600" }}>
+                          {remainingHoursLabel}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                ) : (
+                  <Text style={{ marginHorizontal: 14, marginBottom: i === milestones.length - 1 ? 12 : 8, fontSize: 13, color: muted }}>
+                    No target date
+                  </Text>
+                )}
+              </View>
+            );
+          })
+        )}
       </Section>
     </ScrollView>
   );
