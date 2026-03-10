@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Picker } from "@react-native-picker/picker";
 import { View, Text, TextInput, StyleSheet, FlatList, Button, Pressable, Modal, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { supabase } from "@/utils/supabase";
 
 type CharityForm = {
     name: string;
@@ -26,6 +27,57 @@ export default function CharityForm() {
         const newHeight = Math.min(150, Math.max(40, event.nativeEvent.contentSize.height));
         setInputHeight(newHeight);
     };
+
+    const onSubmitHandler = async () => {
+        // Validate form fields
+        if (!form.name.trim()) {
+            alert("Please enter a charity name.");
+            return;
+        }
+        if (!form.type) {
+            alert("Please select a charity type.");
+            return;
+        }
+        if (!form.description.trim()) {
+            alert("Please enter a charity description.");
+            return;
+        }
+        if (form.website && !/^https?:\/\/\S+$/.test(form.website)) {
+            alert("Please enter a valid website URL.");
+            return;
+        }
+        if (form.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail)) {
+            alert("Please enter a valid email address.");
+            return;
+        }
+          // Submit form data to backend or perform desired action
+
+          console.log("Form submitted:", form);
+
+          const {error} = await supabase.from("charity").insert([
+            {
+              created_at: new Date().toISOString(),
+              charity_name: form.name,
+              charity_type: form.type,
+              description: form.description,
+              website: form.website,
+              contact_email: form.contactEmail,
+              contribution_total: 0,
+            }
+          ]);
+          if(error){
+            alert("Error submitting form: " + error.message);
+            return;
+          }
+          alert("Charity submitted successfully!");
+          setForm({
+            name: "",
+            type: "",
+            description: "",
+            website: "",
+            contactEmail: "",
+          });
+        }
 
     return (
     <>
@@ -90,6 +142,8 @@ export default function CharityForm() {
             onChangeText={(text) => setForm({...form, contactEmail:text})}
             placeholder="Enter contact email"
         />
+
+        <Button title="Submit" onPress={onSubmitHandler} />
     </SafeAreaView>
     </>
     );  
