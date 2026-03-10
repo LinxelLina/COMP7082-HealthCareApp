@@ -1,10 +1,11 @@
 import {use, useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, Button, Pressable, Modal, Alert } from "react-native";
+import { View, Text, StyleSheet, FlatList, Button, Pressable, Modal, Alert, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GestureHandlerRootView, ScrollView } from "react-native-gesture-handler";
 import DropDownPicker from "react-native-dropdown-picker";
 import { supabase } from "@/utils/supabase";
-      
+import * as WebBrowser from "expo-web-browser";
+
 type Charity_Category = "Education" | "Environment" | "Animal_Welfare" | "Disaster_Relief" | "Other";
 
 type Charity = {
@@ -16,6 +17,7 @@ type Charity = {
     contactEmail: string;
     funds: number;
 };
+
 
 export default function charity_list() {
     const [charityList, setCharityList] = useState<Charity[]>([]);
@@ -34,13 +36,26 @@ export default function charity_list() {
     const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
     const [selected, setSelected] = useState<Charity | null>(null);
 
+    async function sleep(timeout: number) {
+      return new Promise(resolve => setTimeout(resolve, timeout))
+    }
+    async function openLink(this: any, url: string) {
+      try {
+        const formattedUrl = url.startsWith("http") ? url : `https://${url}`;
+        await WebBrowser.openBrowserAsync(formattedUrl);
+
+      } catch (error: any) {
+        Alert.alert(error.message)
+      }
+    }
+
     useEffect(() => {
         async function fetchCharities() {
             const { data, error } = await supabase
             .from("charity")
             .select("*");
 
-            console.log(data);
+            // console.log(data);
             if (error) {
                 console.error("Error fetching charities:", error);
             } else {
@@ -53,7 +68,7 @@ export default function charity_list() {
                     contactEmail: charity.contact_email,
                     funds: charity.contribution_total,
                 }));
-                console.log(mappedData);
+                // console.log(mappedData);
                 setCharityList(mappedData);
             }
         }
@@ -76,11 +91,11 @@ export default function charity_list() {
     }, [charityList]);
 
     function openForm(id : string) {
-        console.log("Opening form for charity ID:", id);
+        // console.log("Opening form for charity ID:", id);
         const selectedCharity = charityList.find(item => item.id === id);
         setSelected(selectedCharity ?? null);
         setIsDescriptionOpen(true);
-        console.log(selected);
+        // console.log(selected);
     }
 
     return(
@@ -134,7 +149,7 @@ export default function charity_list() {
                                     <Text style={styles.modalLabel}>Description</Text>
                                     <Text>{selected.description}</Text>
 
-                                    <Text style={styles.modalLabel}>Website</Text>
+                                    <Text style={styles.modalLabel}>Website [Click for more Information]</Text>
                                     <Text>{selected.website}</Text>
 
                                     <Text style={styles.modalLabel}>Contact</Text>
@@ -142,6 +157,10 @@ export default function charity_list() {
 
                                     <Text style={styles.modalLabel}>Funds Raised</Text>
                                     <Text>${selected.funds}</Text>
+
+                                    <Pressable onPress={() => openLink(selected.website)}>
+                                      <Text style={{color: "blue", textDecorationLine: "underline", fontSize: 25}}>Learn More</Text>
+                                    </Pressable>
                                 </>
                             )}
                         </ScrollView>
