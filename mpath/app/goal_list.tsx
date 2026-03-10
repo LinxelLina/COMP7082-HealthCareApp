@@ -11,8 +11,12 @@ import { router } from "expo-router";
     type Habit = {
       id: string;
       goal: string;
+      description: string;
       category: string;
       newHabit: boolean;
+      isMilestone: boolean;
+      milestoneType: string;
+      milestoneTarget: number | null;
       start_date: Date;
       hasDuration: boolean;
       duration: Date;
@@ -22,6 +26,7 @@ import { router } from "expo-router";
 
     type GoalForm = {
       goal: string;
+      description: string;
       category: string;
       newHabit: boolean;
       hasDuration: boolean;
@@ -91,8 +96,12 @@ export default function goal_list() {
         const mappedData = data?.map((goal: any) => ({
           id: goal.goal_id.toString(),
           goal: goal.title,
+          description: goal.description ?? "",
           category: goal.category ?? "Other",
           newHabit: goal.is_habit ?? false,
+          isMilestone: goal.is_milestone ?? false,
+          milestoneType: goal.milestone_type ?? "",
+          milestoneTarget: goal.milestone_target ?? null,
           start_date: goal.created_at ? new Date(goal.created_at) : new Date(),
           hasDuration: goal.duration_date != null,
           duration: goal.duration_date ? new Date(goal.duration_date) : new Date(),
@@ -155,6 +164,7 @@ export default function goal_list() {
     }, [currentList]);
     
     const deleteItem = (id: string) => {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
       Alert.alert(
         "Delete Habit",
         "Are you sure you want to delete this habit?",
@@ -167,15 +177,17 @@ export default function goal_list() {
             text: "Delete",
             style: "destructive",
             onPress: () => {
-              supabase
-                .from('goals')
-                .delete()
-                .eq('goal_id', id)
-                .then(({ error }) => {
-                  if (error) {
-                    console.error('Error deleting goal:', error);
-                  }
-                });
+              if (isUuid) {
+                supabase
+                  .from('goals')
+                  .delete()
+                  .eq('goal_id', id)
+                  .then(({ error }) => {
+                    if (error) {
+                      console.error('Error deleting goal:', error);
+                    }
+                  });
+              }
             }
           }
         ]
@@ -201,7 +213,7 @@ export default function goal_list() {
 
     async function addCategoryGoalsToDatabase(category: Category, goal: string) {
       console.log(category, goal);
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("goals")
         .insert([
           {
@@ -211,10 +223,14 @@ export default function goal_list() {
             is_habit: false,
             is_completed: false,
           },
-        ]);
+        ])
+        .select("goal_id")
+        .single();
       if (error) { 
         Alert.alert("Save failed", error.message);
+        return null;
       };
+      return data?.goal_id?.toString() ?? null;
     }
 
     return (
@@ -290,10 +306,15 @@ export default function goal_list() {
                   router.push({
                     pathname: "/goal_detail",
                     params: {
+                      goal_id: item.id,
                       title: item.goal,
+                      description: item.description,
                       category: item.category,
                       is_habit: String(item.newHabit),
                       is_completed: String(item.isComplete),
+                      is_milestone: String(item.isMilestone),
+                      milestone_type: item.milestoneType,
+                      milestone_target: item.milestoneTarget != null ? String(item.milestoneTarget) : "",
                       duration_date: item.hasDuration ? item.duration.toISOString() : "",
                     },
                   })
@@ -329,21 +350,26 @@ export default function goal_list() {
                     <Pressable
                         key={option}
                         style={styles.option}
-                        onPress={() => {
-                        setCurrentList(prev => [
-                          ...prev,
-                          {
-                            id: Date.now().toString(), //temporary id generation, will change to something more robust later maybe when implementing database
-                            goal: option,
-                            newHabit: true,
-                            hasDuration: false,
-                            duration: new Date(),
-                            isComplete: false,
-                            start_date: new Date(),
-                            category: selectedCategory,
-                          },
-                        ]);
-                          addCategoryGoalsToDatabase(selectedCategory, option);
+                        onPress={async () => {
+                          const savedId = await addCategoryGoalsToDatabase(selectedCategory, option);
+                          if (!savedId) return;
+                          setCurrentList(prev => [
+                            ...prev,
+                            {
+                              id: savedId,
+                              goal: option,
+                              description: `Added from category selection: ${selectedCategory}`,
+                              category: selectedCategory,
+                              newHabit: true,
+                              isMilestone: false,
+                              milestoneType: "",
+                              milestoneTarget: null,
+                              hasDuration: false,
+                              duration: new Date(),
+                              isComplete: false,
+                              start_date: new Date(),
+                            },
+                          ]);
                         }}
                     >
                         <Text>{option}</Text>

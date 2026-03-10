@@ -8,6 +8,7 @@ import { supabase } from "@/utils/supabase";
 
 type GoalForm = {
     goal: string;
+    description: string;
     category: string;
     newHabit: boolean;
     hasDuration: boolean;
@@ -15,7 +16,7 @@ type GoalForm = {
     isComplete: boolean;
     isMilestone: boolean;
     milestoneType: "" | "streak" | "count";
-    milestoneTarget: number;
+    milestoneTarget: number | null;
 }
 type GoalFormProps = {
   onSubmit?: (form: GoalForm) => void;
@@ -23,6 +24,7 @@ type GoalFormProps = {
 export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
     const [form, setForm] = useState<GoalForm>({
         goal: "",
+        description: "",
         category: "",
         newHabit: false,
         hasDuration: false,
@@ -30,7 +32,7 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
         isComplete: false,
         isMilestone: false,
         milestoneType: "",
-        milestoneTarget: 0,
+        milestoneTarget: null,
     });
     const [date, setDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -65,10 +67,6 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
           Alert.alert("Missing milestone type", "Please choose a milestone type.");
           return;
         }
-        if (form.isMilestone && (!Number.isFinite(form.milestoneTarget) || form.milestoneTarget <= 0)) {
-          Alert.alert("Invalid milestone target", "Please enter a milestone target greater than 0.");
-          return;
-        }
         try {
           if(form.hasDuration){
           const { error } = await supabase
@@ -76,7 +74,7 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
             .insert([
               {
                 title: form.goal.trim(),
-                description: `Target date: ${form.duration.toISOString()}`,
+                description: form.description.trim(),
                 category: form.category || "other",
                 duration_date: form.duration.toISOString(),
                 is_habit: form.newHabit,
@@ -97,7 +95,7 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
             .insert([
               {
                 title: form.goal.trim(),
-                description: "",
+                description: form.description.trim(),
                 category: form.category || "other",
                 is_habit: form.newHabit,
                 is_completed: form.isComplete,
@@ -135,6 +133,18 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
             value={form.goal}
             onChangeText={(text) => setForm({...form, goal:text})}
             placeholder="Enter goal"
+        />
+        <TextInput
+            style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                padding: 10,
+                marginHorizontal: 16,
+                marginBottom: 8,
+            }}
+            value={form.description}
+            onChangeText={(text) => setForm({...form, description:text})}
+            placeholder="Enter description (optional)"
         />
         <Picker selectedValue={form.category} onValueChange={(value) => setForm({...form, category:value})}>
             <Picker.Item label="Select a category" value="" />
@@ -177,8 +187,13 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
                 marginHorizontal: 16,
                 marginBottom: 8,
               }}
-              value={form.milestoneTarget ? String(form.milestoneTarget) : ""}
-              onChangeText={(text) => setForm({...form, milestoneTarget: parseInt(text, 10) || 0})}
+              value={form.milestoneTarget !== null ? String(form.milestoneTarget) : ""}
+              onChangeText={(text) =>
+                setForm({
+                  ...form,
+                  milestoneTarget: text.trim() === "" ? null : (Number.isNaN(parseInt(text, 10)) ? null : parseInt(text, 10)),
+                })
+              }
               keyboardType="numeric"
               placeholder="Milestone target"
             />
