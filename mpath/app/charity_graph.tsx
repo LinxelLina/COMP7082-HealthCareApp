@@ -51,7 +51,7 @@ export default function charity_description(){
                 data={barData}
                 yAxisThickness={0}
                 xAxisThickness={0}
-                onPress={(dataPoint)=>{
+                onPress={(dataPoint:any)=>{
                     Alert.alert("Current Total", `${dataPoint.value} for ${dataPoint.label}`);
                 }
                 }

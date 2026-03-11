@@ -32,14 +32,10 @@ import { router } from "expo-router";
       hasDuration: boolean;
       duration: Date;
       isComplete: boolean;
+      isMilestone: boolean;
+      milestoneType: string;
+      milestoneTarget: number | null;
     }
-      
-    const temp_goal_list: Habit[]=
-    [
-      { id: "1", goal: "Drink more water", category: "Food", newHabit: true, hasDuration: false, duration: new Date(), isComplete: false, start_date: new Date() },
-      { id: "2", goal: "Eat more food", category: "Food", newHabit: true, hasDuration: false, duration: new Date(), isComplete: false, start_date: new Date() },
-      { id: "3", goal: "Feed the fish", category: "Other", newHabit: true, hasDuration: false, duration: new Date(), isComplete: false, start_date: new Date() },
-    ];
 
     type Category = "Food" | "Fitness" | "Mental_Health" | "Social" | "Study" | "Sleep" | "Other";
 
@@ -68,10 +64,13 @@ export default function goal_list() {
       {label: 'Social', value: 'Social'},
       {label: 'Study', value: 'Study'},
       {label: 'Sleep', value: 'Sleep'},
+      {label: 'Milestones', value: 'Milestones'},
       {label: 'Other', value: 'Other'}
     ]);
 
-    const filterList = value === "All" || value === null ? currentList : currentList.filter(item => item.category === value);
+    const filterList = value === "All" || value === null ? currentList 
+    : value === "Milestones" ? currentList.filter(item => item.isMilestone) 
+    : currentList.filter(item => item.category === value);
 
     const getRemainingTime = (endDate: string) => {
       const diff = new Date(endDate).getTime() - Date.now();
@@ -147,7 +146,10 @@ export default function goal_list() {
     }, [value]);
 
   useEffect(() => {
-      setVisibleList(currentList);
+      // const sortedList = [...currentList].sort((a, b) =>  Number(a.isComplete) - Number(b.isComplete));
+      // sortedList.sort((a, b) => {return a.goal.localeCompare(b.goal)});
+      const sortedList = [...currentList].sort((a, b) => { return (Number(a.isComplete) - Number(b.isComplete)) || a.goal.localeCompare(b.goal)});
+      setVisibleList(sortedList);
     }, [currentList]);
     
     const deleteItem = (id: string) => {
