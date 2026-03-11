@@ -5,7 +5,7 @@ import  SwipeRow from "./swipableComponent";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import GoalForm from "./goal_form";
 import DropDownPicker from "react-native-dropdown-picker";
-import { supabase } from "@/utils/supabase";
+import { createGoal, deleteGoal, listGoals, type GoalRecord, updateGoalCompletion } from "@/services/goals";
 import { router } from "expo-router";
 
     type Habit = {
@@ -83,44 +83,33 @@ export default function goal_list() {
 
       return `${hours}h ${minutes}m`;
     };
-    useEffect(() => { //get goals from database,
-      const fetchData = async () => {
-        const { data, error } = await supabase
-          .from('goals')
-          .select('*');
-        
-        if (error) {
-          console.error('Error fetching goals:', error);
-        } 
 
-        const mappedData = data?.map((goal: any) => ({
-          id: goal.goal_id.toString(),
-          goal: goal.title,
-          description: goal.description ?? "",
-          category: goal.category ?? "Other",
-          newHabit: goal.is_habit ?? false,
-          isMilestone: goal.is_milestone ?? false,
-          milestoneType: goal.milestone_type ?? "",
-          milestoneTarget: goal.milestone_target ?? null,
-          start_date: goal.created_at ? new Date(goal.created_at) : new Date(),
-          hasDuration: goal.duration_date != null,
-          duration: goal.duration_date ? new Date(goal.duration_date) : new Date(),
-          isComplete: goal.is_completed ?? false,
-        }));
+    const mapGoalRecordToHabit = (goal: GoalRecord): Habit => ({
+      id: goal.id.toString(),
+      goal: goal.title,
+      description: goal.description ?? "",
+      category: goal.category ?? "Other",
+      newHabit: !!goal.is_habit,
+      isMilestone: !!goal.is_milestone,
+      milestoneType: goal.milestone_type ?? "",
+      milestoneTarget: goal.milestone_target ?? null,
+      start_date: goal.created_at ? new Date(goal.created_at) : new Date(),
+      hasDuration: goal.duration_date != null,
+      duration: goal.duration_date ? new Date(goal.duration_date) : new Date(),
+      isComplete: !!goal.is_completed,
+    });
+
+    const fetchData = async () => {
+      try {
+        const data = await listGoals();
+        const mappedData = data.map(mapGoalRecordToHabit);
         // console.log(mappedData);
         //delete goals that have expired and are marked as complete, append remaining time to goals that have expired but are not marked as complete, and append remaining time to goals that have a duration
         for (const goal of mappedData || []) {
           if (goal.hasDuration) {
             const remainingTime = getRemainingTime(goal.duration.toISOString());
             if(remainingTime === "Expired" && goal.isComplete) {
-              const {error} = await supabase
-                  .from('goals')
-                  .delete()
-                  .eq('goal_id', goal.id)
-  
-                  if (error) {
-                    console.error('Error deleting goal:', error);
-                  };
+              await deleteGoal(Number(goal.id));
             }else if (remainingTime === "Expired" && !goal.isComplete) {
               goal.goal += " (Expired)";
             }else {
@@ -134,20 +123,18 @@ export default function goal_list() {
           if (!goal.hasDuration && goal.isComplete) {
             const createdAt = new Date(goal.start_date);
             if (Date.now() - createdAt.getTime() > oneDay){
-              const {error} = await supabase
-                .from('goals')
-                .delete()
-                .eq('goal_id', goal.id)
-
-                if (error) {
-                  console.error('Error deleting goal:', error);
-                };
+              await deleteGoal(Number(goal.id));
             }
           }  
         }
 
         setCurrentList(mappedData || []);
-      };
+      } catch (error) {
+        console.error('Error fetching goals:', error);
+      }
+    };
+
+    useEffect(() => { //get goals from database,
       fetchData();
     },[]);
 
@@ -164,7 +151,6 @@ export default function goal_list() {
     }, [currentList]);
     
     const deleteItem = (id: string) => {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
       Alert.alert(
         "Delete Habit",
         "Are you sure you want to delete this habit?",
@@ -176,33 +162,25 @@ export default function goal_list() {
           {
             text: "Delete",
             style: "destructive",
-            onPress: () => {
-              if (isUuid) {
-                supabase
-                  .from('goals')
-                  .delete()
-                  .eq('goal_id', id)
-                  .then(({ error }) => {
-                    if (error) {
-                      console.error('Error deleting goal:', error);
-                    }
-                  });
+            onPress: async () => {
+              try {
+                await deleteGoal(Number(id));
+                setCurrentList(prev =>
+                  prev.filter(item => item.id !== id)
+                );
+              } catch (error) {
+                console.error('Error deleting goal:', error);
               }
             }
           }
         ]
       );
-      setCurrentList(prev =>
-        prev.filter(item => item.id !== id)
-      );
     };
 
 
     const toggleComplete = async (id: string) => {
-      const {error} = await supabase        
-        .from('goals')
-        .update({ is_completed: !currentList.find(item => item.id === id)?.isComplete })
-        .eq('goal_id', id);
+      const nextValue = !currentList.find(item => item.id === id)?.isComplete;
+      await updateGoalCompletion(Number(id), nextValue);
 
       setCurrentList(prev =>
         prev.map(item =>
@@ -213,24 +191,19 @@ export default function goal_list() {
 
     async function addCategoryGoalsToDatabase(category: Category, goal: string) {
       console.log(category, goal);
-      const { data, error } = await supabase
-        .from("goals")
-        .insert([
-          {
-            title: goal.trim(),
-            description: `Added from category selection: ${category}`,
-            category: category,
-            is_habit: false,
-            is_completed: false,
-          },
-        ])
-        .select("goal_id")
-        .single();
-      if (error) { 
-        Alert.alert("Save failed", error.message);
+      try {
+        const savedId = await createGoal({
+          title: goal.trim(),
+          description: `Added from category selection: ${category}`,
+          category,
+          is_habit: false,
+          is_completed: false,
+        });
+        return savedId?.toString() ?? null;
+      } catch (error: any) {
+        Alert.alert("Save failed", error?.message || "Unexpected database error.");
         return null;
-      };
-      return data?.goal_id?.toString() ?? null;
+      }
     }
 
     return (
@@ -280,18 +253,11 @@ export default function goal_list() {
                 >
                   <GoalForm onSubmit={(form:GoalForm) => {
                     console.log(form);
-                    setCurrentList(prev => [
-                      ...prev,
-                      {
-                        id: Date.now().toString(), // modern & safe
-                        ...form,
-                        start_date: new Date(),
-                      },
-                    ]);
                     if (form.newHabit && form.category in OPTIONS) {
                       OPTIONS[form.category as Category].push(form.goal);
                     }
                     setOpenNewHabitForm(false);
+                    fetchData();
                   }}/>
                 </Pressable>
             </Pressable>

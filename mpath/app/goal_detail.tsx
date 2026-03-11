@@ -21,35 +21,35 @@ export default function GoalDetailScreen() {
     duration_date?: string;
   }>();
   const hasDescription = !!params.description?.trim();
-  const hasDurationDate = !!params.duration_date?.trim();
+  const hasSavedDuration = !!params.duration_date?.trim();
   const [isMilestone, setIsMilestone] = useState(params.is_milestone === "true");
   const [showMilestoneForm, setShowMilestoneForm] = useState(false);
-  const [milestoneType, setMilestoneType] = useState<"" | "streak" | "count">((params.milestone_type as "" | "streak" | "count") || "");
+  const [milestoneType, setMilestoneType] = useState<"" | "streak" | "count">(
+    (params.milestone_type as "" | "streak" | "count") || ""
+  );
   const [milestoneTarget, setMilestoneTarget] = useState(params.milestone_target || "");
   const [hasDuration, setHasDuration] = useState(false);
   const [duration, setDuration] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const hasMilestoneType = !!milestoneType.trim();
   const hasMilestoneTarget = !!milestoneTarget.trim();
-  let durationCountdown = "";
+  let durationText = "";
 
-  if (hasDurationDate) {
-    const due = new Date(params.duration_date as string);
-    const diffMs = due.getTime() - Date.now();
-    const dayMs = 24 * 60 * 60 * 1000;
+  if (hasSavedDuration) {
+    const endDate = new Date(params.duration_date as string);
+    const diff = endDate.getTime() - Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
 
-    if (Number.isNaN(due.getTime())) {
-      durationCountdown = "";
-    } else if (diffMs < 0) {
-      const overdueDays = (Math.abs(diffMs) / dayMs).toFixed(1);
-      durationCountdown = `Overdue by ${overdueDays} days`;
-    } else {
-      const daysLeft = (diffMs / dayMs).toFixed(1);
-      durationCountdown = `${daysLeft} days left`;
+    if (!Number.isNaN(endDate.getTime())) {
+      if (diff < 0) {
+        durationText = `Overdue by ${(Math.abs(diff) / oneDay).toFixed(1)} days`;
+      } else {
+        durationText = `${(diff / oneDay).toFixed(1)} days left`;
+      }
     }
   }
 
-  const setAsMilestone = async () => {
+  const saveMilestone = async () => {
     if (!milestoneType) {
       Alert.alert("Missing milestone type", "Please choose a milestone type.");
       return;
@@ -115,25 +115,35 @@ export default function GoalDetailScreen() {
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>{params.title || "Goal Detail"}</Text>
 
-      <View style={styles.section}>
-        <Text>Category: {params.category || "-"}</Text>
-        <Text>Habit: {params.is_habit || "-"}</Text>
-        <Text>Completed: {params.is_completed || "-"}</Text>
-        {hasDescription && <Text>Description: {params.description}</Text>}
-        {hasDurationDate && durationCountdown && <Text>Duration: {durationCountdown}</Text>}
-        {isMilestone && <Text>Milestone Enabled: true</Text>}
-        {isMilestone && hasMilestoneType && <Text>Milestone Type: {params.milestone_type}</Text>}
-        {isMilestone && hasMilestoneTarget && <Text>Milestone Target: {params.milestone_target}</Text>}
+      <View style={styles.infoBox}>
+        <Text style={styles.rowText}>Category: {params.category || "-"}</Text>
+        <Text style={styles.rowText}>Habit: {params.is_habit || "-"}</Text>
+        <Text style={styles.rowText}>Completed: {params.is_completed || "-"}</Text>
+        {hasDescription && <Text style={styles.rowText}>Description: {params.description}</Text>}
+        {hasSavedDuration && durationText && <Text style={styles.rowText}>Duration: {durationText}</Text>}
+        {isMilestone && <Text style={styles.rowText}>Milestone Enabled: true</Text>}
+        {isMilestone && hasMilestoneType && (
+          <Text style={styles.rowText}>Milestone Type: {params.milestone_type}</Text>
+        )}
+        {isMilestone && hasMilestoneTarget && (
+          <Text style={styles.rowText}>Milestone Target: {params.milestone_target}</Text>
+        )}
+
         {!isMilestone && (
           <View style={styles.milestoneSection}>
-            <Button title="Set as milestone" onPress={() => setShowMilestoneForm((prev) => !prev)} />
+            <Button
+              title="Set as milestone"
+              onPress={() => setShowMilestoneForm((prev) => !prev)}
+            />
             {showMilestoneForm && (
               <>
+                <Text style={styles.formLabel}>Milestone type</Text>
                 <Picker selectedValue={milestoneType} onValueChange={(value) => setMilestoneType(value)}>
                   <Picker.Item label="Select milestone type" value="" />
                   <Picker.Item label="Streak" value="streak" />
                   <Picker.Item label="Count" value="count" />
                 </Picker>
+                <Text style={styles.formLabel}>Milestone target</Text>
                 <TextInput
                   style={styles.milestoneInput}
                   value={milestoneTarget}
@@ -167,7 +177,7 @@ export default function GoalDetailScreen() {
                   />
                 )}
                 {hasDuration && <Text>selected: {duration.toLocaleString()}</Text>}
-                <Button title="Save Milestone" onPress={setAsMilestone} />
+                <Button title="Save Milestone" onPress={saveMilestone} />
               </>
             )}
           </View>
@@ -188,11 +198,23 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 16,
   },
-  section: {
-    gap: 8,
+  infoBox: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
+  },
+  rowText: {
+    marginBottom: 8,
   },
   milestoneSection: {
     marginTop: 8,
+  },
+  formLabel: {
+    marginTop: 8,
+    marginBottom: 4,
+    fontWeight: "600",
   },
   milestoneInput: {
     borderWidth: 1,

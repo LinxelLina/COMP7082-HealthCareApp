@@ -1,6 +1,6 @@
 import { openDatabaseAsync, type SQLiteDatabase } from "expo-sqlite";
 
-const GOALS_DATABASE_NAME = "goals.db";
+const DB_NAME = "goals.db";
 
 export type GoalRecord = {
   id: number;
@@ -35,20 +35,24 @@ export type UpdateMilestoneInput = {
   duration_date?: string | null;
 };
 
-let dbPromise: Promise<SQLiteDatabase> | null = null;
+let db: SQLiteDatabase | null = null;
 
-async function getGoalsDatabase() {
-  if (!dbPromise) {
-    dbPromise = openDatabaseAsync(GOALS_DATABASE_NAME);
+async function getDb() {
+  if (!db) {
+    db = await openDatabaseAsync(DB_NAME);
   }
 
-  return dbPromise;
+  return db;
+}
+
+function toInt(value?: boolean) {
+  return value ? 1 : 0;
 }
 
 export async function initGoalsDatabase() {
-  const db = await getGoalsDatabase();
+  const database = await getDb();
 
-  await db.execAsync(`
+  await database.execAsync(`
     CREATE TABLE IF NOT EXISTS goals (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
@@ -64,29 +68,27 @@ export async function initGoalsDatabase() {
     );
   `);
 
-  return db;
+  return database;
 }
 
 export async function listGoals() {
-  const db = await initGoalsDatabase();
-  return db.getAllAsync<GoalRecord>(
-    `SELECT * FROM goals ORDER BY datetime(created_at) DESC, id DESC`
+  const database = await initGoalsDatabase();
+  const rows = await database.getAllAsync<GoalRecord>(
+    "SELECT * FROM goals ORDER BY datetime(created_at) DESC, id DESC"
   );
+  return rows;
 }
 
 export async function getGoalById(id: number) {
-  const db = await initGoalsDatabase();
-  const rows = await db.getAllAsync<GoalRecord>(
-    `SELECT * FROM goals WHERE id = ? LIMIT 1`,
-    id
-  );
+  const database = await initGoalsDatabase();
+  const rows = await database.getAllAsync<GoalRecord>("SELECT * FROM goals WHERE id = ? LIMIT 1", id);
 
   return rows[0] ?? null;
 }
 
 export async function createGoal(input: CreateGoalInput) {
-  const db = await initGoalsDatabase();
-  const result = await db.runAsync(
+  const database = await initGoalsDatabase();
+  const result = await database.runAsync(
     `INSERT INTO goals (
       title,
       description,
@@ -101,9 +103,9 @@ export async function createGoal(input: CreateGoalInput) {
     input.title.trim(),
     input.description ?? null,
     input.category ?? null,
-    input.is_habit ? 1 : 0,
-    input.is_completed ? 1 : 0,
-    input.is_milestone ? 1 : 0,
+    toInt(input.is_habit),
+    toInt(input.is_completed),
+    toInt(input.is_milestone),
     input.milestone_type ?? null,
     input.milestone_target ?? null,
     input.duration_date ?? null
@@ -113,24 +115,24 @@ export async function createGoal(input: CreateGoalInput) {
 }
 
 export async function updateGoalCompletion(id: number, isCompleted: boolean) {
-  const db = await initGoalsDatabase();
-  await db.runAsync(
+  const database = await initGoalsDatabase();
+  await database.runAsync(
     `UPDATE goals SET is_completed = ? WHERE id = ?`,
-    isCompleted ? 1 : 0,
+    toInt(isCompleted),
     id
   );
 }
 
 export async function updateGoalMilestone(id: number, input: UpdateMilestoneInput) {
-  const db = await initGoalsDatabase();
-  await db.runAsync(
+  const database = await initGoalsDatabase();
+  await database.runAsync(
     `UPDATE goals
       SET is_milestone = ?,
           milestone_type = ?,
           milestone_target = ?,
           duration_date = ?
       WHERE id = ?`,
-    input.is_milestone ? 1 : 0,
+    toInt(input.is_milestone),
     input.milestone_type ?? null,
     input.milestone_target ?? null,
     input.duration_date ?? null,
@@ -139,6 +141,6 @@ export async function updateGoalMilestone(id: number, input: UpdateMilestoneInpu
 }
 
 export async function deleteGoal(id: number) {
-  const db = await initGoalsDatabase();
-  await db.runAsync(`DELETE FROM goals WHERE id = ?`, id);
+  const database = await initGoalsDatabase();
+  await database.runAsync("DELETE FROM goals WHERE id = ?", id);
 }

@@ -4,7 +4,7 @@ import { View, Text, TextInput, StyleSheet, Button, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Checkbox } from 'expo-checkbox';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { supabase } from "@/utils/supabase";
+import { createGoal } from "@/services/goals";
 
 type GoalForm = {
     goal: string;
@@ -68,55 +68,24 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
           return;
         }
         try {
-          if(form.hasDuration){
-          const { error } = await supabase
-            .from("goals")
-            .insert([
-              {
-                title: form.goal.trim(),
-                description: form.description.trim(),
-                category: form.category || "other",
-                duration_date: form.duration.toISOString(),
-                is_habit: form.newHabit,
-                is_completed: form.isComplete,
-                is_milestone: form.isMilestone,
-                milestone_type: form.isMilestone ? form.milestoneType : null,
-                milestone_target: form.isMilestone ? form.milestoneTarget : null,
-              },
-            ]);
-
-            if (error) {
-              Alert.alert("Save failed", error.message);
-              return;
-            }
-          }else{
-            const { error } = await supabase
-            .from("goals")
-            .insert([
-              {
-                title: form.goal.trim(),
-                description: form.description.trim(),
-                category: form.category || "other",
-                is_habit: form.newHabit,
-                is_completed: form.isComplete,
-                is_milestone: form.isMilestone,
-                milestone_type: form.isMilestone ? form.milestoneType : null,
-                milestone_target: form.isMilestone ? form.milestoneTarget : null,
-              },
-            ]);
-
-              if (error) {
-                Alert.alert("Save failed", error.message);
-                return;
-              }
-          }
+          await createGoal({
+            title: form.goal.trim(),
+            description: form.description.trim(),
+            category: form.category || "Other",
+            duration_date: form.hasDuration ? form.duration.toISOString() : null,
+            is_habit: form.newHabit,
+            is_completed: form.isComplete,
+            is_milestone: form.isMilestone,
+            milestone_type: form.isMilestone ? form.milestoneType : null,
+            milestone_target: form.isMilestone ? form.milestoneTarget : null,
+          });
         } catch (error: any) {
           Alert.alert("Save failed", error?.message || "Unexpected database error.");
           return;
         }
 
         onSubmit(form);
-        Alert.alert("Saved", "Goal was added to Supabase.");
+        Alert.alert("Saved", "Goal was added to local storage.");
     }
 
 
