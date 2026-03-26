@@ -1,3 +1,5 @@
+// Data layer to take care of sqlite
+
 import { openDatabaseAsync, type SQLiteDatabase } from "expo-sqlite";
 
 const DB_NAME = "goals.db";

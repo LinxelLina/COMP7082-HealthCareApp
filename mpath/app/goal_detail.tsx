@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
 import { Checkbox } from "expo-checkbox";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { supabase } from "@/utils/supabase";
+import { getGoalById, updateGoalMilestone } from "@/services/goals";
 
 export default function GoalDetailScreen() {
   const params = useLocalSearchParams<{
@@ -77,13 +77,10 @@ export default function GoalDetailScreen() {
       updatePayload.duration_date = duration.toISOString();
     }
 
-    const { error } = await supabase
-      .from("goals")
-      .update(updatePayload)
-      .eq("goal_id", params.goal_id);
-
-    if (error) {
-      Alert.alert("Update failed", error.message);
+    try {
+      await updateGoalMilestone(Number(params.goal_id), updatePayload);
+    } catch (error: any) {
+      Alert.alert("Update failed", error?.message || "Unexpected database error.");
       return;
     }
 
@@ -95,15 +92,11 @@ export default function GoalDetailScreen() {
   useEffect(() => {
     const loadMilestoneValues = async () => {
       if (!params.goal_id) return;
-      const { data, error } = await supabase
-        .from("goals")
-        .select("is_milestone, milestone_type, milestone_target")
-        .eq("goal_id", params.goal_id)
-        .single();
+      const data = await getGoalById(Number(params.goal_id));
 
-      if (error || !data) return;
+      if (!data) return;
 
-      setIsMilestone(data.is_milestone ?? false);
+      setIsMilestone(!!data.is_milestone);
       setMilestoneType((data.milestone_type as "" | "streak" | "count") || "");
       setMilestoneTarget(data.milestone_target != null ? String(data.milestone_target) : "");
     };
