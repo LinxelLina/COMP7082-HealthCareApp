@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Picker } from "@react-native-picker/picker";
-import { View, Text, TextInput, StyleSheet, Button, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScrollView, View, Text, TextInput, StyleSheet, Button, Alert,Platform } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Checkbox } from 'expo-checkbox';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { createGoal } from "@/services/goals";
@@ -42,7 +42,7 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
         setDate(selectedDate);
         setForm(prev => ({ ...prev, duration: selectedDate }));
       }
-      setShowDatePicker(false);
+      // setShowDatePicker(false);
     };
 
 
@@ -91,7 +91,8 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
 
     return (
     <>
-    <SafeAreaView style={styles.container}>
+    <SafeAreaProvider style={styles.container}>
+      <ScrollView>
         <TextInput 
             style={{
                 borderWidth: 1,
@@ -180,18 +181,30 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
         <Text>Set target date?</Text>
         </View>
          <View style={styles.section}>
-        {showDatePicker && <DateTimePicker
+        {showDatePicker && (     
+          <>
+        <DateTimePicker
           testID="dateTimePicker"
           value={date}
           mode={"date"}
           is24Hour={true}
           onChange={onChange}
-        />}
+        />
+        <DateTimePicker
+          testID="dateTimePicker"
+          value={date}
+          mode={"time"}
+          is24Hour={true}
+          onChange={onChange}
+        />
+        </>   
+        )}
         </View>
         <Text>selected: {date.toLocaleString()}</Text>
 
         <Button title="Submit" onPress={onSubmitHandler} />
-    </SafeAreaView>
+        </ScrollView>
+    </SafeAreaProvider>
     </>
     );  
 }

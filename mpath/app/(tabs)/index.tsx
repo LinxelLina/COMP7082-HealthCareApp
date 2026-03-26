@@ -13,6 +13,7 @@ import { StyleSheet, Button, Text, View, Platform, LogBox } from "react-native";
 // Keeps the app from overlapping with statusbar
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from 'expo-router';
+import GoalsList from './goal_list';
 
 
 
@@ -174,34 +175,36 @@ export default function HomeScreen() {
     // </ParallaxScrollView>
         // "View" is basically HTML <div>
   <>
+
     <SafeAreaView style={styles.container}>
       <Text style={styles.appTitle}>M-Path</Text>
       {/* Start button to get to home page. May eventually add login system */}
+      <GoalsList/>
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Home</Text>
           <View style={styles.buttonGroup}>
-            <View style={styles.buttonRow}>
-              <Button color="#2e7d32" title="List" onPress={() => router.push("/goal_list")} />
+            {/* <View style={styles.buttonRow}>
+              <Button color="#2e7d32" title="List" onPress={() => router.push("/goal_page")} />
             </View>
             <View style={styles.buttonRow}>
               <Button color="#2e7d32" title="Charity Form" onPress={() => router.push("/charity_form")} />
             </View>
             <View style={styles.buttonRow}>
               <Button color="#2e7d32" title="Go to Profile" onPress={() => router.push("/profile")} />
-            </View>
+            </View> */}
 
-            <View style={styles.buttonRow}>
+            {/* <View style={styles.buttonRow}>
               <Button color="#2e7d32" title="Charity List" onPress={() => router.push("/charity_list")} />
-            </View>
+            </View> */}
             <View style={styles.buttonRow}>
               <Button color="#2e7d32" title="Charity Graph" onPress={() => router.push("/charity_graph")} />
             </View>
             <View style={styles.buttonRow}>
               <Button color="#2e7d32" title="Test Ad Video" onPress={() => router.push("/ad_video")} />
             </View>
-            <View style={styles.buttonRow}>
+            {/* <View style={styles.buttonRow}>
               <Button color="#2e7d32" title="Weekly Summary" onPress={() => router.push("/summary")} />
-            </View>
+            </View> */}
           </View>
         </View>
         <StatusBar style="auto" />
