@@ -5,59 +5,13 @@ import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { supabase } from "@/utils/supabase";
 
-// expo's built-in functionality for notifications
-import * as Notifications from "expo-notifications";
-
-//added platform for notifications, logbox for ignoring notification error banner XD
-import { StyleSheet, Button, Text, View, Platform, LogBox } from "react-native";
+import { StyleSheet, Button, Text, View } from "react-native";
 // Keeps the app from overlapping with statusbar
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from 'expo-router';
 
 
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
-
-LogBox.ignoreLogs([
-  "expo-notifications: Android Push notifications",
-  "was removed from Expo Go",
-]);
-
-
 export default function HomeScreen() {
-
-  const notify = async () => {
-    const { status } = await Notifications.requestPermissionsAsync();
-
-    if (status !== "granted") {
-      console.log("Notification permission not granted");
-      return;
-    }
-
-    // Android fix from chatGPT to help banners and sound
-    if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync("default", {
-        name: "default",
-        importance: Notifications.AndroidImportance.MAX,
-      });
-    }
-
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "M-Path",
-        body: "Test notification!",
-        sound: "default",
-      },
-      trigger: null,
-    });
-  };
 
     // Test insert and select row (with a button)
   const testSupabase = async () => {

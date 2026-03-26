@@ -32,6 +32,8 @@ import { router } from "expo-router";
       hasDuration: boolean;
       duration: Date;
       isComplete: boolean;
+      reminderEnabled: boolean;
+      reminderTime: Date;
     }
       
     const temp_goal_list: Habit[]=

@@ -4,7 +4,8 @@ import { View, Text, TextInput, StyleSheet, Button, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Checkbox } from 'expo-checkbox';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { createGoal } from "@/services/goals";
+import { createGoal, updateGoalReminder } from "@/services/goals";
+import { scheduleDailyGoalReminder } from "@/utils/notifications";
 
 type GoalForm = {
     goal: string;
@@ -17,6 +18,8 @@ type GoalForm = {
     isMilestone: boolean;
     milestoneType: "" | "streak" | "count";
     milestoneTarget: number | null;
+    reminderEnabled: boolean;
+    reminderTime: Date;
 }
 type GoalFormProps = {
   onSubmit?: (form: GoalForm) => void;
@@ -33,9 +36,12 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
         isMilestone: false,
         milestoneType: "",
         milestoneTarget: null,
+        reminderEnabled: false,
+        reminderTime: new Date(),
     });
     const [date, setDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showReminderPicker, setShowReminderPicker] = useState(false);
 
     const onChange = (event:any, selectedDate:any) => {
       if (event?.type === "set" && selectedDate) {
@@ -45,6 +51,21 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
       setShowDatePicker(false);
     };
 
+    const onReminderChange = (event:any, selectedTime:any) => {
+      if (event?.type === "set" && selectedTime) {
+        setForm(prev => ({ ...prev, reminderTime: selectedTime }));
+      }
+      setShowReminderPicker(false);
+    };
+
+    const formatReminderTime = (value: Date) => {
+      const hours = value.getHours().toString().padStart(2, "0");
+      const minutes = value.getMinutes().toString().padStart(2, "0");
+      return `${hours}:${minutes}`;
+    };
+
+    const formatReminderLabel = (value: Date) =>
+      value.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
     async function onSubmitHandler(){
         if (!form.goal.trim()) {
@@ -67,8 +88,12 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
           Alert.alert("Missing milestone type", "Please choose a milestone type.");
           return;
         }
+
+        const reminderTime = form.reminderEnabled ? formatReminderTime(form.reminderTime) : null;
+
+        let savedGoalId: number | null = null;
         try {
-          await createGoal({
+          savedGoalId = await createGoal({
             title: form.goal.trim(),
             description: form.description.trim(),
             category: form.category || "Other",
@@ -78,14 +103,39 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
             is_milestone: form.isMilestone,
             milestone_type: form.isMilestone ? form.milestoneType : null,
             milestone_target: form.isMilestone ? form.milestoneTarget : null,
+            reminder_enabled: form.reminderEnabled,
+            reminder_time: reminderTime,
           });
         } catch (error: any) {
           Alert.alert("Save failed", error?.message || "Unexpected database error.");
           return;
         }
 
+        if (form.reminderEnabled && savedGoalId != null) {
+          try {
+            const notificationId = await scheduleDailyGoalReminder(
+              form.goal.trim(),
+              reminderTime ?? "09:00"
+            );
+
+            if (notificationId) {
+              await updateGoalReminder(savedGoalId, notificationId);
+            } else {
+              Alert.alert(
+                "Reminder not scheduled",
+                "Goal was saved, but notification permission was not granted."
+              );
+            }
+          } catch (error: any) {
+            Alert.alert(
+              "Reminder not scheduled",
+              error?.message || "Goal was saved, but the reminder could not be scheduled."
+            );
+          }
+        }
+
         onSubmit(form);
-        Alert.alert("Saved", "Goal was added to local storage.");
+        Alert.alert("Saved", form.reminderEnabled ? "Goal and reminder were saved." : "Goal was added to local storage.");
     }
 
 
@@ -190,6 +240,32 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
         </View>
         <Text>selected: {date.toLocaleString()}</Text>
 
+        <View style={styles.section}>
+          <Checkbox
+            style={styles.checkbox}
+            value={form.reminderEnabled}
+            onValueChange={(value) => {
+              setForm({...form, reminderEnabled:value});
+              setShowReminderPicker(value);
+            }}
+          />
+          <Text>Enable daily reminder?</Text>
+        </View>
+        <View style={styles.section}>
+          {showReminderPicker && (
+            <DateTimePicker
+              testID="reminderTimePicker"
+              value={form.reminderTime}
+              mode={"time"}
+              is24Hour={true}
+              onChange={onReminderChange}
+            />
+          )}
+        </View>
+        {form.reminderEnabled && (
+          <Text>Reminder time: {formatReminderLabel(form.reminderTime)}</Text>
+        )}
+
         <Button title="Submit" onPress={onSubmitHandler} />
     </SafeAreaView>
     </>
@@ -210,6 +286,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     zIndex: 9999,
     elevation:9999,
+  },
+  section: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
+  checkbox: {
+    marginRight: 8,
   },
   categoryList:{
     flex:1,
@@ -257,12 +342,5 @@ const styles = StyleSheet.create({
   },
   option: {
     paddingVertical: 12,
-  },
-  checkbox: {
-    margin: 8,
-  },
-    section: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
 });

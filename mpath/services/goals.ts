@@ -1,6 +1,7 @@
 // Data layer to take care of sqlite
 
 import { openDatabaseAsync, type SQLiteDatabase } from "expo-sqlite";
+import { cancelScheduledReminder } from "@/utils/notifications";
 
 const DB_NAME = "goals.db";
 
@@ -15,6 +16,9 @@ export type GoalRecord = {
   milestone_type: string | null;
   milestone_target: number | null;
   duration_date: string | null;
+  reminder_enabled: number;
+  reminder_time: string | null;
+  reminder_notification_id: string | null;
   created_at: string;
 };
 
@@ -28,6 +32,9 @@ export type CreateGoalInput = {
   milestone_type?: string | null;
   milestone_target?: number | null;
   duration_date?: string | null;
+  reminder_enabled?: boolean;
+  reminder_time?: string | null;
+  reminder_notification_id?: string | null;
 };
 
 export type UpdateMilestoneInput = {
@@ -51,6 +58,19 @@ function toInt(value?: boolean) {
   return value ? 1 : 0;
 }
 
+async function ensureColumn(
+  database: SQLiteDatabase,
+  columnName: string,
+  definition: string
+) {
+  const columns = await database.getAllAsync<{ name: string }>("PRAGMA table_info(goals)");
+  const hasColumn = columns.some((column) => column.name === columnName);
+
+  if (!hasColumn) {
+    await database.execAsync(`ALTER TABLE goals ADD COLUMN ${columnName} ${definition};`);
+  }
+}
+
 export async function initGoalsDatabase() {
   const database = await getDb();
 
@@ -66,9 +86,16 @@ export async function initGoalsDatabase() {
       milestone_type TEXT,
       milestone_target INTEGER,
       duration_date TEXT,
+      reminder_enabled INTEGER NOT NULL DEFAULT 0,
+      reminder_time TEXT,
+      reminder_notification_id TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  await ensureColumn(database, "reminder_enabled", "INTEGER NOT NULL DEFAULT 0");
+  await ensureColumn(database, "reminder_time", "TEXT");
+  await ensureColumn(database, "reminder_notification_id", "TEXT");
 
   return database;
 }
@@ -100,8 +127,11 @@ export async function createGoal(input: CreateGoalInput) {
       is_milestone,
       milestone_type,
       milestone_target,
-      duration_date
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      duration_date,
+      reminder_enabled,
+      reminder_time,
+      reminder_notification_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     input.title.trim(),
     input.description ?? null,
     input.category ?? null,
@@ -110,10 +140,24 @@ export async function createGoal(input: CreateGoalInput) {
     toInt(input.is_milestone),
     input.milestone_type ?? null,
     input.milestone_target ?? null,
-    input.duration_date ?? null
+    input.duration_date ?? null,
+    toInt(input.reminder_enabled),
+    input.reminder_time ?? null,
+    input.reminder_notification_id ?? null
   );
 
   return result.lastInsertRowId;
+}
+
+export async function updateGoalReminder(id: number, reminderNotificationId: string | null) {
+  const database = await initGoalsDatabase();
+  await database.runAsync(
+    `UPDATE goals
+      SET reminder_notification_id = ?
+      WHERE id = ?`,
+    reminderNotificationId,
+    id
+  );
 }
 
 export async function updateGoalCompletion(id: number, isCompleted: boolean) {
@@ -144,5 +188,19 @@ export async function updateGoalMilestone(id: number, input: UpdateMilestoneInpu
 
 export async function deleteGoal(id: number) {
   const database = await initGoalsDatabase();
+  const rows = await database.getAllAsync<{ reminder_notification_id: string | null }>(
+    "SELECT reminder_notification_id FROM goals WHERE id = ? LIMIT 1",
+    id
+  );
+  const reminderNotificationId = rows[0]?.reminder_notification_id;
+
+  if (reminderNotificationId) {
+    try {
+      await cancelScheduledReminder(reminderNotificationId);
+    } catch (error) {
+      console.error("Error cancelling reminder notification:", error);
+    }
+  }
+
   await database.runAsync("DELETE FROM goals WHERE id = ?", id);
 }

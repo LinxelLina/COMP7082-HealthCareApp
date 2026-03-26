@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { initGoalsDatabase } from '@/services/goals';
+import { initializeNotifications } from '@/utils/notifications';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -17,6 +18,10 @@ export default function RootLayout() {
   useEffect(() => {
     initGoalsDatabase().catch((error) => {
       console.error("Error initializing goals database:", error);
+    });
+
+    initializeNotifications().catch((error) => {
+      console.error("Error initializing notifications:", error);
     });
   }, []);
 
