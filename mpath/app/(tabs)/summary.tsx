@@ -8,7 +8,7 @@ import {
   addWeeks,
   formatWeekRange,
 } from "@/utils/week";
-import { supabase } from "@/utils/supabase";
+import { listGoals } from "@/services/goals";
 
 /* ---------- UI helpers ---------- */
 function Button({
@@ -184,19 +184,24 @@ export default function SummaryScreen() {
 
   useEffect(() => {
     const fetchMilestones = async () => {
-      const { data, error } = await supabase
-        .from("goals")
-        .select("goal_id, title, milestone_type, milestone_target, duration_date, created_at")
-        .eq("is_milestone", true)
-        .order("created_at", { ascending: false });
+      try {
+        const goals = await listGoals();
+        const localMilestones = goals
+          .filter((goal) => !!goal.is_milestone)
+          .map((goal) => ({
+            goal_id: String(goal.id),
+            title: goal.title,
+            milestone_type: goal.milestone_type,
+            milestone_target: goal.milestone_target,
+            duration_date: goal.duration_date,
+            created_at: goal.created_at,
+          }));
 
-      if (error) {
+        setMilestones(localMilestones);
+      } catch (error) {
         console.error("Error fetching milestones:", error);
         setMilestones([]);
-        return;
       }
-
-      setMilestones((data as MilestoneGoal[]) || []);
     };
 
     fetchMilestones();
