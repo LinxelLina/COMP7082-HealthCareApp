@@ -8,6 +8,7 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { createGoal, deleteGoal, listGoals, type GoalRecord, updateGoalCompletion } from "@/services/goals";
 import { router } from "expo-router";
 import GoalsList from "../goal_list";
+import MaterialCommunityIcons from "@expo/vector-icons/build/MaterialCommunityIcons";
 
     type Habit = {
       id: string;
@@ -24,7 +25,6 @@ import GoalsList from "../goal_list";
       isComplete: boolean;
     };
 
-
     type GoalForm = {
       goal: string;
       description: string;
@@ -39,7 +39,15 @@ import GoalsList from "../goal_list";
     }
 
     type Category = "Food" | "Fitness" | "Mental_Health" | "Social" | "Study" | "Sleep" | "Other";
-
+    const ICONS: Record<Category, string> = {
+        Food: "food-fork-drink",
+        Fitness: "dumbbell",
+        Mental_Health: "brain",
+        Social: "account-group",
+        Study: "book-alphabet",
+        Sleep: "sleep",
+        Other: "cloud-question",
+    }
     const OPTIONS: Record<Category, string[]> = {
         Food: ["Eat breakfast", "Eat lunch", "Eat dinner", "Snack","Drink more water", "Eat more fruits", "Eat more vegetables"],
         Fitness: ["Go for a walk","Go for a run", "Do yoga", "Lift weights", "Got to the gym", "Go to the pool"],
@@ -50,6 +58,15 @@ import GoalsList from "../goal_list";
         Other: ["Practice a hobby", "Learn something new", "Organize your space", "Set goals for the week", "Reflect on your day","test","test2","test4"]
     }
 
+    const CATEGORYNAMES: Record<Category, string> = {
+        Food: "Food",
+        Fitness: "Fitness",
+        Mental_Health: "Mental Health",
+        Social: "Social",
+        Study: "Study",
+        Sleep: "Sleep",
+        Other: "Other"
+    }
 export default function goal_page() {
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [openNewHabitForm, setOpenNewHabitForm] = useState(false);
@@ -74,7 +91,7 @@ export default function goal_page() {
 
     return (
     <>
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top','left','right']}>
 
         {openNewHabitForm && (
             <Pressable
@@ -156,7 +173,8 @@ export default function goal_page() {
                     onPress={() => setSelectedCategory(category as Category)}
                     style={styles.categoryButton}
                     >
-                    <Text style={styles.categoryText}>{category}</Text>
+                    <MaterialCommunityIcons name={ICONS[category as Category]} size={24} color="black" />
+                    <Text style={styles.categoryText}>{CATEGORYNAMES[category as Category]}</Text>
                 </Pressable>
             ))}
         </View>
@@ -178,6 +196,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop:10,
     backgroundColor: "#fff",
+    marginBottom: 0,
   },
   picker: {
     marginHorizontal: 16,
@@ -208,6 +227,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontWeight: "600",
+    fontSize: 6,
     color: "#333",
   },
     modalOverlay: {
