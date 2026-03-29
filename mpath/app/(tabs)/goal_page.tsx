@@ -49,7 +49,7 @@ import { router } from "expo-router";
         Other: ["Practice a hobby", "Learn something new", "Organize your space", "Set goals for the week", "Reflect on your day","test","test2","test4"]
     }
 
-export default function GoalsList() {
+export default function goal_list() {
     const [currentList, setCurrentList] = useState<Habit[]>([]);
     const [visibleList, setVisibleList] = useState<Habit[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -191,6 +191,22 @@ export default function GoalsList() {
       );
     };
 
+    async function addCategoryGoalsToDatabase(category: Category, goal: string) {
+      console.log(category, goal);
+      try {
+        const savedId = await createGoal({
+          title: goal.trim(),
+          description: `Added from category selection: ${category}`,
+          category,
+          is_habit: false,
+          is_completed: false,
+        });
+        return savedId?.toString() ?? null;
+      } catch (error: any) {
+        Alert.alert("Save failed", error?.message || "Unexpected database error.");
+        return null;
+      }
+    }
 
     return (
     <>
@@ -211,6 +227,43 @@ export default function GoalsList() {
           style={{ borderColor: "#ccc", opacity: openNewHabitForm ? 0.5 : 1}}
           
         />
+
+        {openNewHabitForm && (
+            <Pressable
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 1000,
+              }}
+              onPress={() => setOpenNewHabitForm(false)} 
+            >
+                <Pressable
+                  style={{
+                    width: '90%',
+                    height: '80%',
+                    backgroundColor: 'white',
+                    borderRadius: 16,
+                    padding: 16,
+                  }}
+                  onPress={() => {}}
+                >
+                  <GoalForm onSubmit={(form:GoalForm) => {
+                    console.log(form);
+                    if (form.newHabit && form.category in OPTIONS) {
+                      OPTIONS[form.category as Category].push(form.goal);
+                    }
+                    setOpenNewHabitForm(false);
+                    fetchData();
+                  }}/>
+                </Pressable>
+            </Pressable>
+        )}
 
         <FlatList
             data={visibleList}
@@ -248,6 +301,66 @@ export default function GoalsList() {
             contentContainerStyle={{ paddingTop: 0 }}
         />
             
+        <Modal
+            visible={selectedCategory !== null}
+            transparent
+            animationType="slide"
+        >
+            <Pressable
+                style={styles.modalOverlay}
+                onPress={() => setSelectedCategory(null)}
+            >
+                <Pressable style={styles.modalContent} onPress={() => {}}>
+
+                <Text style={styles.modalTitle}>{selectedCategory}</Text>
+                {selectedCategory &&
+                    OPTIONS[selectedCategory].map((option) => (
+                    <Pressable
+                        key={option}
+                        style={styles.option}
+                        onPress={async () => {
+                          const savedId = await addCategoryGoalsToDatabase(selectedCategory, option);
+                          if (!savedId) return;
+                          setCurrentList(prev => [
+                            ...prev,
+                            {
+                              id: savedId,
+                              goal: option,
+                              description: `Added from category selection: ${selectedCategory}`,
+                              category: selectedCategory,
+                              newHabit: true,
+                              isMilestone: false,
+                              milestoneType: "",
+                              milestoneTarget: null,
+                              hasDuration: false,
+                              duration: new Date(),
+                              isComplete: false,
+                              start_date: new Date(),
+                            },
+                          ]);
+                        }}
+                    >
+                        <Text>{option}</Text>
+                    </Pressable>
+                    ))}
+                </Pressable>
+            </Pressable>
+        </Modal>
+
+        <Button title="Add New Habit" onPress={() => {setOpen(false);
+          setOpenNewHabitForm(!openNewHabitForm);}}/>
+
+        <View style={styles.categoryBar}>
+            {Object.keys(OPTIONS).map((category) => (
+                <Pressable
+                    key={category}
+                    onPress={() => setSelectedCategory(category as Category)}
+                    style={styles.categoryButton}
+                    >
+                    <Text style={styles.categoryText}>{category}</Text>
+                </Pressable>
+            ))}
+        </View>
     </SafeAreaView>
     </GestureHandlerRootView>
     </>
@@ -265,6 +378,7 @@ const styles = StyleSheet.create({
   },
     container: {
     flex: 1,
+    paddingTop:10,
     backgroundColor: "#fff",
   },
   picker: {

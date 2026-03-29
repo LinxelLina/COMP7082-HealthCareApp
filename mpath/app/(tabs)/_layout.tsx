@@ -26,7 +26,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="goal_list"
+        name="goal_page"
         options={{
           title: 'Goals List',
           tabBarIcon: ({ color }) => <MaterialCommunityIcons size={28} name="playlist-edit" color={color} />,
