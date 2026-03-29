@@ -1,8 +1,43 @@
 import { ResizeMode, Video } from "expo-av";
-import { router } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useEffect } from "react";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { useLocalSearchParams } from "expo-router";
+import { supabase } from "@/utils/supabase";
+import { addDonation } from "@/services/profile";
 
 export default function AdVideoScreen() {
+
+  const { charity_id } = useLocalSearchParams<{ charity_id: string }>();
+  const charityId = Number(charity_id);
+
+  useFocusEffect(
+    useCallback(() => {
+      const timer = setTimeout(() => {
+        async function updateCharityPoint(){
+          const {error} = await supabase.rpc("increment_contribution", { 
+            charity_id: charityId,
+            contribution: 10  // ← pass whatever value you want here
+          });
+          if (error) {
+            Alert.alert("Error", "There was an issue updating the charity points. Please try again.");
+          }
+
+          await addDonation(10);
+          
+        }
+        updateCharityPoint();
+        
+
+        Alert.alert("Success","Successfully watched the ad and earned points. Returning to the previous screen.", 
+          [{text: "OK", onPress: () => router.back() }]);
+
+      }, 5000); // 30000ms = 30 seconds
+
+      return () => clearTimeout(timer); // cleanup if user leaves page early
+    },[])
+  );
+
   return (
     <View style={styles.container}>
       <Video
@@ -13,7 +48,7 @@ export default function AdVideoScreen() {
         isLooping
         shouldPlay
       />
-      <Pressable style={styles.skipButton} onPress={() => router.replace("/(tabs)")}>
+      <Pressable style={styles.skipButton} onPress={() => router.back()}>
         <Text style={styles.skipText}>Skip</Text>
       </Pressable>
     </View>

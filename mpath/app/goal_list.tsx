@@ -7,6 +7,8 @@ import GoalForm from "./goal_form";
 import DropDownPicker from "react-native-dropdown-picker";
 import { createGoal, deleteGoal, listGoals, type GoalRecord, updateGoalCompletion } from "@/services/goals";
 import { router, useFocusEffect } from "expo-router";
+import { addDonation, getProfile } from "@/services/profile";
+import { supabase } from "@/utils/supabase";
 
     type Habit = {
       id: string;
@@ -204,6 +206,26 @@ export default function GoalsList({ showDropdownOverlay, disableDropdown, onRefr
 
 
     const toggleComplete = async (id: string) => {
+      const profileData = await getProfile();
+      if(profileData?.current_charity == null) {
+        Alert.alert("No Charity Selected", "Please select a charity in your profile to earn points for completing goals.");
+        return;
+      }
+
+      async function updateCharityPoint(){
+        const {error} = await supabase.rpc("increment_contribution_by_name", { 
+          charity_name: profileData.current_charity,
+          contribution: 1  // ← pass whatever value you want here
+        });
+        if (error) {
+          Alert.alert("Error", "There was an issue updating the charity points. Please try again.");
+        }
+
+        await addDonation(1);
+      }
+      updateCharityPoint();
+
+
       const nextValue = !currentList.find(item => item.id === id)?.isComplete;
       await updateGoalCompletion(Number(id), nextValue);
 

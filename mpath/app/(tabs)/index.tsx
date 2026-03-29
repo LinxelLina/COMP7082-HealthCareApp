@@ -9,11 +9,12 @@ import { supabase } from "@/utils/supabase";
 import * as Notifications from "expo-notifications";
 
 //added platform for notifications, logbox for ignoring notification error banner XD
-import { StyleSheet, Button, Text, View, Platform, LogBox } from "react-native";
+import { StyleSheet, Button, Text, View, Platform, LogBox, Pressable } from "react-native";
 // Keeps the app from overlapping with statusbar
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from 'expo-router';
 import GoalsList from '../goal_list';
+import {Image} from 'expo-image';
 
 
 
@@ -33,6 +34,7 @@ LogBox.ignoreLogs([
 
 
 export default function HomeScreen() {
+  const [isPetted, setIsPetted] = React.useState(false);
 
   const notify = async () => {
     const { status } = await Notifications.requestPermissionsAsync();
@@ -105,6 +107,12 @@ export default function HomeScreen() {
     }
   };
 
+  const handlePetMascot = () => {
+    setIsPetted(true);
+    setTimeout(() => {
+      setIsPetted(false);
+    }, 1000); // Reset after 2 seconds
+  }
 
   return (
   <>
@@ -116,31 +124,10 @@ export default function HomeScreen() {
             <View style={styles.goalsList}>
               <GoalsList showDropdownOverlay={false}/>
             </View>
-          <View style={styles.buttonGroup}>
-            {/* <View style={styles.buttonRow}>
-              <Button color="#2e7d32" title="List" onPress={() => router.push("/goal_page")} />
-            </View>
-            <View style={styles.buttonRow}>
-              <Button color="#2e7d32" title="Charity Form" onPress={() => router.push("/charity_form")} />
-            </View>
-            <View style={styles.buttonRow}>
-              <Button color="#2e7d32" title="Go to Profile" onPress={() => router.push("/profile")} />
-            </View> */}
-
-            {/* <View style={styles.buttonRow}>
-              <Button color="#2e7d32" title="Charity List" onPress={() => router.push("/charity_list")} />
-            </View> */}
-            <View style={styles.buttonRow}>
-              <Button color="#2e7d32" title="Charity Graph" onPress={() => router.push("/charity_graph")} />
-            </View>
-            <View style={styles.buttonRow}>
-              <Button color="#2e7d32" title="Test Ad Video" onPress={() => router.push("/ad_video")} />
-            </View>
-            {/* <View style={styles.buttonRow}>
-              <Button color="#2e7d32" title="Weekly Summary" onPress={() => router.push("/summary")} />
-            </View> */}
-          </View>
         </View>
+        <Pressable onPress={handlePetMascot}>
+          <Image source={isPetted ? require("../../assets/images/petmascot.gif") : require("../../assets/images/mascot.gif")} style={{zIndex: 100, width:200, height:200, alignSelf: "flex-end"}}/>
+        </Pressable>
         <StatusBar style="auto" />
       </SafeAreaView>
     </>
@@ -185,9 +172,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   goalsList:{
-    flex:1,
-    // height: 200,
-    borderWidth: 4,
+    // flex:1,
+    
+    height: 350,
+    borderWidth: 2,
     borderColor: 'black',
+    borderRadius: 4,
+    borderTopEndRadius:11,
+    borderTopStartRadius:11,
   }
 });

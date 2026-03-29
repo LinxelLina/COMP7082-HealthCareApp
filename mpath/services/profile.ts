@@ -62,9 +62,10 @@ export async function updateCharity(id: number, charity: string) {
 }
 
 
-export async function addDonation(id: number, isCompleted: boolean) {
+export async function addDonation(amount: number) {
   const database = await initGoalsDatabase();
   await database.runAsync(
-    `UPDATE profile SET total_donations = total_donations + 1`
+    `UPDATE profile SET total_donations = total_donations + ?`,
+    amount
   );
 }

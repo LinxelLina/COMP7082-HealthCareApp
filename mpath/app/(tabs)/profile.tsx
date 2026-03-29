@@ -1,7 +1,8 @@
+import { router, useFocusEffect } from "expo-router";
 import { getCharity, getProfile, updateCharity } from "@/services/profile";
 import { supabase } from "@/utils/supabase";
-import { useEffect, useState } from "react";
-import { View, Text } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { View, Text, Pressable } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -10,12 +11,28 @@ type Charity = {
     label: string;
 }
 
+type ProfileRecord = {
+  current_charity: string | null;
+  total_donations: number;
+};
+
+
 export default function Profile() {
+  const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [currentCharity, setCurrentCharity] = useState<Charity | null>(null);
   const [isOpen, setOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [items, setItems] = useState<Charity[]>([]);
 
+  useFocusEffect(
+    useCallback(() => {
+      async function refreshProfile() {
+        const profileData = await getProfile();
+        setProfile(profileData);
+      }
+      refreshProfile();
+    }, [])
+  );
   useEffect(() => { //set up the page by fetching charity list and profile data
     async function initialize() {
       try {
@@ -36,6 +53,8 @@ export default function Profile() {
         setItems(charityList);
 
         const profileData = await getProfile();
+        setProfile(profileData);
+
         if(profileData?.current_charity) {
           const match = charityList.find((c) => c.label === profileData.current_charity);
           if (match) {
@@ -91,6 +110,12 @@ export default function Profile() {
           style={{ borderColor: "#ccc"}}
           
         />
+
+      <Pressable onPress={() => router.push({ pathname: "/ad_video", params: { charity_id: String(value) } })}>
+        <Text>Test Ad-Video</Text>
+      </Pressable>
+
+      <Text>Current Contributions Overall: {profile?.total_donations ?? 0}</Text>
     </SafeAreaView>
   );
 }
