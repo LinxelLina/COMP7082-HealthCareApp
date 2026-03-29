@@ -1,10 +1,11 @@
 import {use, useEffect, useState } from "react";
 import { View, Text, StyleSheet, FlatList, Button, Pressable, Modal, Alert, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { GestureHandlerRootView, ScrollView } from "react-native-gesture-handler";
+import { ScrollView } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { supabase } from "@/utils/supabase";
 import * as WebBrowser from "expo-web-browser";
+import { router } from "expo-router";
 
 type Charity_Category = "Education" | "Environment" | "Animal_Welfare" | "Disaster_Relief" | "Other";
 
@@ -99,8 +100,6 @@ export default function charity_list() {
     }
 
     return(
-    <>
-    <GestureHandlerRootView style={{ flex: 1, position: "relative" }}>
     <SafeAreaView style={styles.container}>
 
         <DropDownPicker
@@ -140,7 +139,7 @@ export default function charity_list() {
                     onPress={()=>{}}>
                         <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
                             {selected && (
-                                <>
+                              <>
                                     <Text style={styles.modalTitle}>{selected.name}</Text>
 
                                     <Text style={styles.modalLabel}>Category</Text>
@@ -161,7 +160,7 @@ export default function charity_list() {
                                     <Pressable onPress={() => openLink(selected.website)}>
                                       <Text style={{color: "blue", textDecorationLine: "underline", fontSize: 25}}>Learn More</Text>
                                     </Pressable>
-                                </>
+                              </>
                             )}
                         </ScrollView>
                     </Pressable>
@@ -183,9 +182,11 @@ export default function charity_list() {
                 </Pressable>
             </Pressable>
         </Modal>
+
+        <Pressable onPress={() => router.push("../charity_graph")}>
+          <Text>Go to Charity Graph</Text>
+        </Pressable>
     </SafeAreaView>
-    </GestureHandlerRootView>
-        </>
     );
 };
 

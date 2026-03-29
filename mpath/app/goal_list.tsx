@@ -1,4 +1,4 @@
-import {use, useEffect, useState } from "react";
+import {createContext, use, useCallback, useEffect, useState } from "react";
 import { ScrollView, View, Text, StyleSheet, FlatList, Button, Pressable, Modal, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import  SwipeRow from "./swipableComponent";
@@ -6,7 +6,9 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import GoalForm from "./goal_form";
 import DropDownPicker from "react-native-dropdown-picker";
 import { createGoal, deleteGoal, listGoals, type GoalRecord, updateGoalCompletion } from "@/services/goals";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
+import { addDonation, getProfile } from "@/services/profile";
+import { supabase } from "@/utils/supabase";
 
     type Habit = {
       id: string;
@@ -50,8 +52,13 @@ import { router } from "expo-router";
         Sleep: ["Go to bed earlier", "Wake up earlier", "Take a nap", "Create a bedtime routine", "Limit screen time before bed", "Avoid caffeine in the evening"],
         Other: ["Practice a hobby", "Learn something new", "Organize your space", "Set goals for the week", "Reflect on your day","test","test2","test4"]
     }
+  type GoalsListProps = {
+    showDropdownOverlay?: boolean;
+    disableDropdown?: boolean;
+    onRefresh?: (fn: () => void) => void;
+  };
 
-export default function GoalsList() {
+export default function GoalsList({ showDropdownOverlay, disableDropdown, onRefresh }: GoalsListProps) {
     const [currentList, setCurrentList] = useState<Habit[]>([]);
     const [visibleList, setVisibleList] = useState<Habit[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -69,6 +76,12 @@ export default function GoalsList() {
       {label: 'Milestones', value: 'Milestones'},
       {label: 'Other', value: 'Other'}
     ]);
+
+    useFocusEffect(
+      useCallback(() => {
+      fetchData();
+      }, [])
+    );
 
     const filterList = value === "All" || value === null ? currentList 
     : value === "Milestones" ? currentList.filter(item => item.isMilestone) 
@@ -129,7 +142,15 @@ export default function GoalsList() {
           }  
         }
 
-        setCurrentList(mappedData || []);
+        setCurrentList(prev => {
+          // Only update if something actually changed
+          const isSame = prev.length === mappedData.length &&
+            prev.every((item, i) => 
+              item.id === mappedData[i].id && 
+              item.isComplete === mappedData[i].isComplete
+            );
+          return isSame ? prev : mappedData;
+        });
       } catch (error) {
         console.error('Error fetching goals:', error);
       }
@@ -138,6 +159,10 @@ export default function GoalsList() {
     useEffect(() => { //get goals from database,
       fetchData();
     },[]);
+
+    useEffect(() => {
+      if (onRefresh) onRefresh(fetchData);
+    }, [onRefresh]);
 
     useEffect(() => {
       if(value === "All" || value === null) {
@@ -183,6 +208,26 @@ export default function GoalsList() {
 
 
     const toggleComplete = async (id: string) => {
+      const profileData = await getProfile();
+      if(profileData?.current_charity == null) {
+        Alert.alert("No Charity Selected", "Please select a charity in your profile to earn points for completing goals.");
+        return;
+      }
+
+      async function updateCharityPoint(){
+        const {error} = await supabase.rpc("increment_contribution_by_name", { 
+          charity_name: profileData.current_charity,
+          contribution: 1  // ← pass whatever value you want here
+        });
+        if (error) {
+          Alert.alert("Error", "There was an issue updating the charity points. Please try again.");
+        }
+
+        await addDonation(1);
+      }
+      updateCharityPoint();
+
+
       const nextValue = !currentList.find(item => item.id === id)?.isComplete;
       await updateGoalCompletion(Number(id), nextValue);
 
@@ -195,10 +240,7 @@ export default function GoalsList() {
 
 
     return (
-    <>
-    <GestureHandlerRootView style={{position: "relative" }}>
-    <View style={styles.container}>
-
+    <View style={{flex: 1}}>
         <DropDownPicker
           open={isOpen}
           value={value}
@@ -207,13 +249,15 @@ export default function GoalsList() {
           setValue={setValue}
           setItems={setItems}
           placeholder="Select category"
-          disabled={openNewHabitForm}
-          zIndexInverse={1000}
-          zIndex={1000}
-          style={{ borderColor: "#ccc", opacity: openNewHabitForm ? 0.5 : 1}}
+          disabled={disableDropdown}
+          zIndexInverse={disableDropdown ? 1 : 1000}
+          zIndex={disableDropdown ? 1 : 1000}
+          style={{ borderColor: "#ccc", opacity: disableDropdown ? 0.5 : 1}}
           
         />
-
+        {showDropdownOverlay && disableDropdown && (
+          <View style={styles.dropdownOverlay} />
+          )}
         <FlatList
             data={visibleList}
             keyExtractor={(item) => item.id}
@@ -251,8 +295,6 @@ export default function GoalsList() {
         />
             
     </View>
-    </GestureHandlerRootView>
-    </>
     );  
 }
 
@@ -266,7 +308,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
     container: {
-    // flex: 1,
+    flex: 1,
     backgroundColor: "#fff",
     },
   picker: {
@@ -319,4 +361,9 @@ const styles = StyleSheet.create({
   option: {
     paddingVertical: 12,
   },
+  dropdownOverlay: {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: "rgba(0,0,0,0.3)",
+  marginTop: 50, // push it below the dropdown itself
+},
 });

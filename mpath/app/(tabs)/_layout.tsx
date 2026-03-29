@@ -17,6 +17,9 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarStyle:{
+          marginTop: 0,
+        }
       }}>
       <Tabs.Screen
         name="index"
@@ -47,9 +50,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="profile"
         options={{
-          title: 'Explore',
+          title: 'Profile',
           tabBarIcon: ({ color }) => <Ionicons name="person-circle-outline" size={28} color={color} />,
         }}
       />

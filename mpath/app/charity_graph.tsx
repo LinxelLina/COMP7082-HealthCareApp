@@ -1,10 +1,10 @@
 import { supabase } from "@/utils/supabase";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { BarChart } from "react-native-gifted-charts";
 import { JSX } from "react/jsx-runtime";
 
-export default function charity_description(){
     type Charity_Numbers = {
         name: string,
         value: number,
@@ -16,7 +16,10 @@ export default function charity_description(){
         frontColor?: string;
         topLabelComponent?: () => JSX.Element;
     };
+
+export default function charity_description(){
     const [charityList, setCharityList] = useState<Charity_Numbers[]>([]);
+
 
     useEffect(()=>{ 
         async function fetchCharityData() {
@@ -28,7 +31,12 @@ export default function charity_description(){
                     name: charity.charity_name,
                     value: charity.contribution_total,
                 }));
-                setCharityList(mappedData || []);
+            setCharityList(prev => {
+                const isSame =
+                    prev.length === mappedData.length &&
+                    prev.every((item, i) => item.name === mappedData[i].name && item.value === mappedData[i].value);
+                return isSame ? prev : mappedData;
+            });
             }
         }
         fetchCharityData();
@@ -41,8 +49,8 @@ export default function charity_description(){
     }));
 
     return(
-        <>
-       <View>
+       <SafeAreaView style={{flex:1}}>
+        <View style={{flex:1}}>
             <BarChart
                 barWidth={22}
                 noOfSections={3}
@@ -52,11 +60,12 @@ export default function charity_description(){
                 yAxisThickness={0}
                 xAxisThickness={0}
                 onPress={(dataPoint:any)=>{
-                    Alert.alert("Current Total", `${dataPoint.value} for ${dataPoint.label}`);
-                }
+                        Alert.alert("Current Total", `${dataPoint.value} for ${dataPoint.label}`);
+                    }
                 }
             />
+
         </View>
-        </>
+        </SafeAreaView>
     )
 }
