@@ -1,4 +1,4 @@
-import {use, useEffect, useState } from "react";
+import {use, useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, FlatList, Button, Pressable, Modal, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import  SwipeRow from "../swipableComponent";
@@ -7,6 +7,7 @@ import GoalForm from "../goal_form";
 import DropDownPicker from "react-native-dropdown-picker";
 import { createGoal, deleteGoal, listGoals, type GoalRecord, updateGoalCompletion } from "@/services/goals";
 import { router } from "expo-router";
+import GoalsList from "../goal_list";
 
     type Habit = {
       id: string;
@@ -49,147 +50,10 @@ import { router } from "expo-router";
         Other: ["Practice a hobby", "Learn something new", "Organize your space", "Set goals for the week", "Reflect on your day","test","test2","test4"]
     }
 
-export default function goal_list() {
-    const [currentList, setCurrentList] = useState<Habit[]>([]);
-    const [visibleList, setVisibleList] = useState<Habit[]>([]);
+export default function goal_page() {
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [openNewHabitForm, setOpenNewHabitForm] = useState(false);
-    const [isOpen, setOpen] = useState(false);
-    const [value, setValue] = useState(null);
-    const [items, setItems] = useState([
-      {label: 'All', value: 'All'},
-      {label: 'Food', value: 'Food'},
-      {label: 'Fitness', value: 'Fitness'},
-      {label: 'Mental Health', value: 'Mental_Health'},
-      {label: 'Social', value: 'Social'},
-      {label: 'Study', value: 'Study'},
-      {label: 'Sleep', value: 'Sleep'},
-      {label: 'Milestones', value: 'Milestones'},
-      {label: 'Other', value: 'Other'}
-    ]);
-
-    const filterList = value === "All" || value === null ? currentList 
-    : value === "Milestones" ? currentList.filter(item => item.isMilestone) 
-    : currentList.filter(item => item.category === value);
-
-    const getRemainingTime = (endDate: string) => {
-      const diff = new Date(endDate).getTime() - Date.now();
-
-      if (diff <= 0) return "Expired";
-
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff / (1000 * 60)) % 60);
-
-      return `${hours}h ${minutes}m`;
-    };
-
-    const mapGoalRecordToHabit = (goal: GoalRecord): Habit => ({
-      id: goal.id.toString(),
-      goal: goal.title,
-      description: goal.description ?? "",
-      category: goal.category ?? "Other",
-      newHabit: !!goal.is_habit,
-      isMilestone: !!goal.is_milestone,
-      milestoneType: goal.milestone_type ?? "",
-      milestoneTarget: goal.milestone_target ?? null,
-      start_date: goal.created_at ? new Date(goal.created_at) : new Date(),
-      hasDuration: goal.duration_date != null,
-      duration: goal.duration_date ? new Date(goal.duration_date) : new Date(),
-      isComplete: !!goal.is_completed,
-    });
-
-    const fetchData = async () => {
-      try {
-        const data = await listGoals();
-        const mappedData = data.map(mapGoalRecordToHabit);
-        // console.log(mappedData);
-        //delete goals that have expired and are marked as complete, append remaining time to goals that have expired but are not marked as complete, and append remaining time to goals that have a duration
-        for (const goal of mappedData || []) {
-          if (goal.hasDuration) {
-            const remainingTime = getRemainingTime(goal.duration.toISOString());
-            if(remainingTime === "Expired" && goal.isComplete) {
-              await deleteGoal(Number(goal.id));
-            }else if (remainingTime === "Expired" && !goal.isComplete) {
-              goal.goal += " (Expired)";
-            }else {
-              goal.goal += ` (${remainingTime} remaining)`;
-            }
-          }
-        }
-          // delete goals a day old that don't have durations
-        const oneDay = 24 * 60 * 60 * 1000;
-        for (const goal of mappedData || []) {
-          if (!goal.hasDuration && goal.isComplete) {
-            const createdAt = new Date(goal.start_date);
-            if (Date.now() - createdAt.getTime() > oneDay){
-              await deleteGoal(Number(goal.id));
-            }
-          }  
-        }
-
-        setCurrentList(mappedData || []);
-      } catch (error) {
-        console.error('Error fetching goals:', error);
-      }
-    };
-
-    useEffect(() => { //get goals from database,
-      fetchData();
-    },[]);
-
-    useEffect(() => {
-      if(value === "All" || value === null) {
-        setVisibleList(currentList);
-      } else {
-        setVisibleList(filterList);
-      }
-    }, [value]);
-
-  useEffect(() => {
-      // const sortedList = [...currentList].sort((a, b) =>  Number(a.isComplete) - Number(b.isComplete));
-      // sortedList.sort((a, b) => {return a.goal.localeCompare(b.goal)});
-      const sortedList = [...currentList].sort((a, b) => { return (Number(a.isComplete) - Number(b.isComplete)) || a.goal.localeCompare(b.goal)});
-      setVisibleList(sortedList);
-    }, [currentList]);
-    
-    const deleteItem = (id: string) => {
-      Alert.alert(
-        "Delete Habit",
-        "Are you sure you want to delete this habit?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel"
-          },
-          {
-            text: "Delete",
-            style: "destructive",
-            onPress: async () => {
-              try {
-                await deleteGoal(Number(id));
-                setCurrentList(prev =>
-                  prev.filter(item => item.id !== id)
-                );
-              } catch (error) {
-                console.error('Error deleting goal:', error);
-              }
-            }
-          }
-        ]
-      );
-    };
-
-
-    const toggleComplete = async (id: string) => {
-      const nextValue = !currentList.find(item => item.id === id)?.isComplete;
-      await updateGoalCompletion(Number(id), nextValue);
-
-      setCurrentList(prev =>
-        prev.map(item =>
-          item.id === id ? { ...item, isComplete: !item.isComplete } : item
-        )
-      );
-    };
+    const refreshListRef = useRef<() => void>(() => {});
 
     async function addCategoryGoalsToDatabase(category: Category, goal: string) {
       console.log(category, goal);
@@ -210,23 +74,7 @@ export default function goal_list() {
 
     return (
     <>
-    <GestureHandlerRootView style={{ flex: 1, position: "relative" }}>
     <SafeAreaView style={styles.container}>
-
-        <DropDownPicker
-          open={isOpen}
-          value={value}
-          items={items}
-          setOpen={setOpen}
-          setValue={setValue}
-          setItems={setItems}
-          placeholder="Select category"
-          disabled={openNewHabitForm}
-          zIndexInverse={1000}
-          zIndex={1000}
-          style={{ borderColor: "#ccc", opacity: openNewHabitForm ? 0.5 : 1}}
-          
-        />
 
         {openNewHabitForm && (
             <Pressable
@@ -259,47 +107,13 @@ export default function goal_list() {
                       OPTIONS[form.category as Category].push(form.goal);
                     }
                     setOpenNewHabitForm(false);
-                    fetchData();
+                    refreshListRef.current();
                   }}/>
                 </Pressable>
             </Pressable>
         )}
 
-        <FlatList
-            data={visibleList}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname: "/goal_detail",
-                    params: {
-                      goal_id: item.id,
-                      title: item.goal,
-                      description: item.description,
-                      category: item.category,
-                      is_habit: String(item.newHabit),
-                      is_completed: String(item.isComplete),
-                      is_milestone: String(item.isMilestone),
-                      milestone_type: item.milestoneType,
-                      milestone_target: item.milestoneTarget != null ? String(item.milestoneTarget) : "",
-                      duration_date: item.hasDuration ? item.duration.toISOString() : "",
-                    },
-                  })
-                }
-                onLongPress={() => toggleComplete(item.id)}
-              >
-                <SwipeRow
-                  item={item}
-                  onDelete={deleteItem}
-                />
-              </Pressable>
-            )}
-            ItemSeparatorComponent={() => <View style={styles.separator2} />}
-            contentInsetAdjustmentBehavior="never"
-            automaticallyAdjustContentInsets={false}
-            contentContainerStyle={{ paddingTop: 0 }}
-        />
+        <GoalsList showDropdownOverlay={true} disableDropdown={openNewHabitForm} onRefresh={(fn) => {refreshListRef.current = fn;}}/>
             
         <Modal
             visible={selectedCategory !== null}
@@ -321,23 +135,8 @@ export default function goal_list() {
                         onPress={async () => {
                           const savedId = await addCategoryGoalsToDatabase(selectedCategory, option);
                           if (!savedId) return;
-                          setCurrentList(prev => [
-                            ...prev,
-                            {
-                              id: savedId,
-                              goal: option,
-                              description: `Added from category selection: ${selectedCategory}`,
-                              category: selectedCategory,
-                              newHabit: true,
-                              isMilestone: false,
-                              milestoneType: "",
-                              milestoneTarget: null,
-                              hasDuration: false,
-                              duration: new Date(),
-                              isComplete: false,
-                              start_date: new Date(),
-                            },
-                          ]);
+                          // setSelectedCategory(null);
+                          refreshListRef.current();
                         }}
                     >
                         <Text>{option}</Text>
@@ -347,7 +146,7 @@ export default function goal_list() {
             </Pressable>
         </Modal>
 
-        <Button title="Add New Habit" onPress={() => {setOpen(false);
+        <Button title="Add New Habit" onPress={() => {
           setOpenNewHabitForm(!openNewHabitForm);}}/>
 
         <View style={styles.categoryBar}>
@@ -362,7 +161,6 @@ export default function goal_list() {
             ))}
         </View>
     </SafeAreaView>
-    </GestureHandlerRootView>
     </>
     );  
 }

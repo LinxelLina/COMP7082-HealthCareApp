@@ -21,7 +21,24 @@ export default function SwipeRow({
 }){
   const translateX = useSharedValue(0);
 
+  // const pan = Gesture.Pan()
+  //   .onUpdate((event) => {
+  //     if (event.translationX < 0) {
+  //       translateX.value = event.translationX;
+  //     }
+  //   })
+  //   .onEnd(() => {
+  //     if (translateX.value < -120) {
+  //       runOnJS(onDelete)(item.id);
+  //       translateX.value = 0;
+  //     } else {
+  //       translateX.value = withSpring(0);
+  //     }
+  //   });
+
   const pan = Gesture.Pan()
+    .activeOffsetX([-10, 10])   // ← only activate for horizontal movement
+    .failOffsetY([-10, 10])     // ← fail the gesture if vertical scroll is detected first
     .onUpdate((event) => {
       if (event.translationX < 0) {
         translateX.value = event.translationX;
@@ -34,7 +51,7 @@ export default function SwipeRow({
       } else {
         translateX.value = withSpring(0);
       }
-    });
+  });
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],

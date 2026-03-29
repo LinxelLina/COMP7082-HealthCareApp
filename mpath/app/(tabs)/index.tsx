@@ -114,7 +114,7 @@ export default function HomeScreen() {
 
         <View style={styles.card}>
             <View style={styles.goalsList}>
-              <GoalsList/>
+              <GoalsList showDropdownOverlay={false}/>
             </View>
           <View style={styles.buttonGroup}>
             {/* <View style={styles.buttonRow}>
@@ -151,8 +151,8 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    // justifyContent: "center",
+    // alignItems: "center",
     paddingHorizontal: 20,
     backgroundColor: "#f4f6f8",
   },
@@ -163,6 +163,7 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   card: {
+    flex: 1,
     width: "100%",
     backgroundColor: "#ffffff",
     borderRadius: 12,
@@ -184,7 +185,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   goalsList:{
-    height: 300,
+    flex:1,
+    // height: 200,
     borderWidth: 4,
     borderColor: 'black',
   }
