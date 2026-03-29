@@ -9,6 +9,7 @@ import { StyleSheet, Button, Text, View } from "react-native";
 // Keeps the app from overlapping with statusbar
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from 'expo-router';
+import GoalsList from '../goal_list';
 
 
 export default function HomeScreen() {
@@ -60,102 +61,38 @@ export default function HomeScreen() {
 
 
   return (
-    // <ParallaxScrollView
-    //   headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-    //   headerImage={
-    //     <Image
-    //       source={require('@/assets/images/partial-react-logo.png')}
-    //       style={styles.reactLogo}
-    //     />
-    //   }>
-    //   <ThemedView style={styles.titleContainer}>
-    //     <ThemedText type="title">Welcome!</ThemedText>
-    //     <HelloWave />
-    //   </ThemedView>
-    //   <ThemedView style={styles.stepContainer}>
-    //     <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-    //     <ThemedText>
-    //       Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-    //       Press{' '}
-    //       <ThemedText type="defaultSemiBold">
-    //         {Platform.select({
-    //           ios: 'cmd + d',
-    //           android: 'cmd + m',
-    //           web: 'F12',
-    //         })}
-    //       </ThemedText>{' '}
-    //       to open developer tools.
-    //     </ThemedText>
-    //   </ThemedView>
-    //   <ThemedView style={styles.stepContainer}>
-    //     <Link href="/modal">
-    //       <Link.Trigger>
-    //         <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-    //       </Link.Trigger>
-    //       <Link.Preview />
-    //       <Link.Menu>
-    //         <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-    //         <Link.MenuAction
-    //           title="Share"
-    //           icon="square.and.arrow.up"
-    //           onPress={() => alert('Share pressed')}
-    //         />
-    //         <Link.Menu title="More" icon="ellipsis">
-    //           <Link.MenuAction
-    //             title="Delete"
-    //             icon="trash"
-    //             destructive
-    //             onPress={() => alert('Delete pressed')}
-    //           />
-    //         </Link.Menu>
-    //       </Link.Menu>
-    //     </Link>
-
-    //     <ThemedText>
-    //       {`Tap the Explore tab to learn more about what's included in this starter app.`}
-    //     </ThemedText>
-    //   </ThemedView>
-    //   <ThemedView style={styles.stepContainer}>
-    //     <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-    //     <ThemedText>
-    //       {`When you're ready, run `}
-    //       <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-    //       <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-    //       <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-    //       <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-    //     </ThemedText>
-    //   </ThemedView>
-    // </ParallaxScrollView>
-        // "View" is basically HTML <div>
   <>
     <SafeAreaView style={styles.container}>
       <Text style={styles.appTitle}>M-Path</Text>
       {/* Start button to get to home page. May eventually add login system */}
+
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Home</Text>
+            <View style={styles.goalsList}>
+              <GoalsList/>
+            </View>
           <View style={styles.buttonGroup}>
-            <View style={styles.buttonRow}>
-              <Button color="#2e7d32" title="List" onPress={() => router.push("/goal_list")} />
+            {/* <View style={styles.buttonRow}>
+              <Button color="#2e7d32" title="List" onPress={() => router.push("/goal_page")} />
             </View>
             <View style={styles.buttonRow}>
               <Button color="#2e7d32" title="Charity Form" onPress={() => router.push("/charity_form")} />
             </View>
             <View style={styles.buttonRow}>
               <Button color="#2e7d32" title="Go to Profile" onPress={() => router.push("/profile")} />
-            </View>
+            </View> */}
 
-            <View style={styles.buttonRow}>
+            {/* <View style={styles.buttonRow}>
               <Button color="#2e7d32" title="Charity List" onPress={() => router.push("/charity_list")} />
-            </View>
+            </View> */}
             <View style={styles.buttonRow}>
               <Button color="#2e7d32" title="Charity Graph" onPress={() => router.push("/charity_graph")} />
             </View>
             <View style={styles.buttonRow}>
               <Button color="#2e7d32" title="Test Ad Video" onPress={() => router.push("/ad_video")} />
             </View>
-            <View style={styles.buttonRow}>
+            {/* <View style={styles.buttonRow}>
               <Button color="#2e7d32" title="Weekly Summary" onPress={() => router.push("/summary")} />
-            </View>
+            </View> */}
           </View>
         </View>
         <StatusBar style="auto" />
@@ -181,24 +118,28 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "100%",
-    maxWidth: 380,
     backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
     borderColor: "#dfe6e9",
   },
-  sectionTitle: {
-    color: "#2f3e46",
-    fontSize: 26,
-    fontWeight: "700",
-    marginBottom: 14,
-    textAlign: "center",
-  },
+  // sectionTitle: {
+  //   color: "#2f3e46",
+  //   fontSize: 26,
+  //   fontWeight: "700",
+  //   marginBottom: 14,
+  //   textAlign: "center",
+  // },
   buttonGroup: {
     width: "100%",
   },
   buttonRow: {
     marginBottom: 10,
   },
+  goalsList:{
+    height: 300,
+    borderWidth: 4,
+    borderColor: 'black',
+  }
 });

@@ -32,7 +32,7 @@ export default function RootLayout() {
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         {/* <Stack.Screen name="index" options={{title: "Home"}} /> */}
         <Stack.Screen name="profile" options={{title: "Profile"}} />
-        <Stack.Screen name="goal_list" options={{title: "Goal List"}} />
+        <Stack.Screen name="goal_page" options={{title: "Goal Page"}} />
         <Stack.Screen name="charity_form" options={{title: "Charity Form"}} />
         <Stack.Screen name="charity_list" options={{title: "Charity List"}} />
         <Stack.Screen name="charity_graph" options={{title: "Charity Graph"}}/>
