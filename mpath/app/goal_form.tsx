@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Picker } from "@react-native-picker/picker";
-import { ScrollView, View, Text, TextInput, StyleSheet, Button, Alert,Platform } from "react-native";
+import { View, Text, TextInput, StyleSheet, Button, Alert,Platform } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Checkbox } from 'expo-checkbox';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { createGoal } from "@/services/goals";
+import {ScrollView} from 'react-native-gesture-handler';
 
 type GoalForm = {
     goal: string;
@@ -91,8 +92,8 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
 
     return (
     <>
-    <SafeAreaProvider style={styles.container}>
-      <ScrollView>
+    <View style={styles.container}>
+      <ScrollView nestedScrollEnabled={true}>
         <TextInput 
             style={{
                 borderWidth: 1,
@@ -116,6 +117,7 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
             onChangeText={(text) => setForm({...form, description:text})}
             placeholder="Enter description (optional)"
         />
+        <View onStartShouldSetResponder={() => true}>
         <Picker selectedValue={form.category} onValueChange={(value) => setForm({...form, category:value})}>
             <Picker.Item label="Select a category" value="" />
             <Picker.Item label="Food" value="Food" />
@@ -126,6 +128,7 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
             <Picker.Item label="Sleep" value="Sleep" />
             <Picker.Item label="Other" value="Other" />
         </Picker>
+        </View>
 
         <View style={styles.section}>
           <Checkbox style={styles.checkbox} value={form.newHabit} onValueChange={(value) => setForm({...form, newHabit:value})} />
@@ -141,6 +144,7 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
         </View>
         {form.isMilestone && (
           <>
+          <View onStartShouldSetResponder={() => true}>
             <Picker
               selectedValue={form.milestoneType}
               onValueChange={(value) => setForm({...form, milestoneType:value})}
@@ -149,6 +153,7 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
               <Picker.Item label="Streak" value="streak" />
               <Picker.Item label="Count" value="count" />
             </Picker>
+          </View>
             <TextInput
               style={{
                 borderWidth: 1,
@@ -204,7 +209,7 @@ export default function GoalForm({onSubmit = () => {}}: GoalFormProps) {
 
         <Button title="Submit" onPress={onSubmitHandler} />
         </ScrollView>
-    </SafeAreaProvider>
+    </View>
     </>
     );  
 }
