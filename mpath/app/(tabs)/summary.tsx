@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, Pressable, ScrollView, StyleSheet } from "react-native";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   startOfWeekMonday,
@@ -118,11 +119,12 @@ type MilestoneGoal = {
   title: string;
   milestone_type: string | null;
   milestone_target: number | null;
+  check_in_count: number;
   duration_date: string | null;
   created_at: string | null;
 };
 
-function getMilestoneProgress(goal: MilestoneGoal): number | null {
+function getDateProgress(goal: MilestoneGoal): number | null {
   if (!goal.duration_date) return null;
 
   const nowMs = Date.now();
@@ -140,20 +142,62 @@ function getMilestoneProgress(goal: MilestoneGoal): number | null {
   return Math.max(0, Math.min(100, rawProgress));
 }
 
-function getMilestoneSubtext(goal: MilestoneGoal, progressPercent: number | null): string | undefined {
-  if (goal.milestone_type && progressPercent !== null) {
-    return `Type: ${goal.milestone_type} • ${Math.round(progressPercent)}%`;
+function getCheckInProgress(goal: MilestoneGoal): number | null {
+  if (goal.milestone_type !== "count") return null;
+  if (goal.milestone_target == null || goal.milestone_target <= 0) return null;
+
+  const progress = (goal.check_in_count / goal.milestone_target) * 100;
+  return Math.max(0, Math.min(100, progress));
+}
+
+function getMilestoneProgress(goal: MilestoneGoal): number | null {
+  if (goal.milestone_type === "count") {
+    return getCheckInProgress(goal);
   }
-  if (goal.milestone_type) {
-    return `Type: ${goal.milestone_type}`;
+
+  return getDateProgress(goal);
+}
+
+function formatTargetDate(value: string): string {
+  const targetDate = new Date(value);
+
+  if (Number.isNaN(targetDate.getTime())) {
+    return "No target date";
   }
-  if (progressPercent !== null) {
-    return `${Math.round(progressPercent)}%`;
+
+  return targetDate.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function getMilestoneSubtext(goal: MilestoneGoal): string | undefined {
+  if (goal.milestone_type === "count") {
+    if (goal.milestone_target != null) {
+      return `${goal.check_in_count} of ${goal.milestone_target} check-ins`;
+    }
+
+    return "Check-in goal";
   }
+
+  if (goal.duration_date) {
+    return `Target date: ${formatTargetDate(goal.duration_date)}`;
+  }
+
+  if (goal.milestone_type === "streak") {
+    return "Target date goal";
+  }
+
   return undefined;
 }
 
 function getRemainingHoursLabel(goal: MilestoneGoal): string | null {
+  if (goal.milestone_type === "count") {
+    if (goal.milestone_target == null) return null;
+    return `${goal.check_in_count} of ${goal.milestone_target}`;
+  }
+
   if (!goal.duration_date) return null;
 
   const targetMs = new Date(goal.duration_date).getTime();
@@ -162,6 +206,41 @@ function getRemainingHoursLabel(goal: MilestoneGoal): string | null {
   const hoursLeft = Math.ceil((targetMs - Date.now()) / (1000 * 60 * 60));
   if (hoursLeft <= 0) return "overdue";
   return `${hoursLeft}h left`;
+}
+
+function getProgressLabel(goal: MilestoneGoal): string {
+  if (goal.milestone_type === "count") {
+    return "Check-in progress";
+  }
+
+  return "Target date progress";
+}
+
+function getProgressBarColor(progressPercent: number): string {
+  if (progressPercent >= 100) return "#0f766e";
+  if (progressPercent >= 70) return "#2e7d32";
+  if (progressPercent >= 35) return "#ca8a04";
+  return "#d97706";
+}
+
+function getMilestoneValue(goal: MilestoneGoal): string {
+  if (goal.milestone_type === "count") {
+    if (goal.milestone_target != null) {
+      return `${goal.milestone_target} check-ins`;
+    }
+
+    return "Check-ins";
+  }
+
+  return goal.duration_date ? "Target date" : "-";
+}
+
+function getEmptyProgressText(goal: MilestoneGoal): string {
+  if (goal.milestone_type === "count") {
+    return "Add a check-in target to track progress.";
+  }
+
+  return "Add a target date to track progress.";
 }
 
 export default function SummaryScreen() {
@@ -179,30 +258,37 @@ export default function SummaryScreen() {
   const weekStart = useMemo(() => startOfWeekMonday(anchor), [anchor]);
   const [milestones, setMilestones] = useState<MilestoneGoal[]>([]);
 
+  const fetchMilestones = async () => {
+    try {
+      const goals = await listGoals();
+      const localMilestones = goals
+        .filter((goal) => !!goal.is_milestone)
+        .map((goal) => ({
+          goal_id: String(goal.id),
+          title: goal.title,
+          milestone_type: goal.milestone_type,
+          milestone_target: goal.milestone_target,
+          check_in_count: goal.check_in_count ?? 0,
+          duration_date: goal.duration_date,
+          created_at: goal.created_at,
+        }));
+
+      setMilestones(localMilestones);
+    } catch (error) {
+      console.error("Error fetching milestones:", error);
+      setMilestones([]);
+    }
+  };
+
   useEffect(() => {
-    const fetchMilestones = async () => {
-      try {
-        const goals = await listGoals();
-        const localMilestones = goals
-          .filter((goal) => !!goal.is_milestone)
-          .map((goal) => ({
-            goal_id: String(goal.id),
-            title: goal.title,
-            milestone_type: goal.milestone_type,
-            milestone_target: goal.milestone_target,
-            duration_date: goal.duration_date,
-            created_at: goal.created_at,
-          }));
-
-        setMilestones(localMilestones);
-      } catch (error) {
-        console.error("Error fetching milestones:", error);
-        setMilestones([]);
-      }
-    };
-
     fetchMilestones();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchMilestones();
+    }, [])
+  );
 
   return (
     <ScrollView
@@ -243,14 +329,15 @@ export default function SummaryScreen() {
         ) : (
           milestones.map((m, i) => {
             const progressPercent = getMilestoneProgress(m);
-            const subLeft = getMilestoneSubtext(m, progressPercent);
+            const subLeft = getMilestoneSubtext(m);
             const remainingHoursLabel = getRemainingHoursLabel(m);
+            const progressBarColor = progressPercent !== null ? getProgressBarColor(progressPercent) : accent;
 
             return (
               <View key={m.goal_id}>
                 <Row
                   left={m.title}
-                  right={m.milestone_target != null ? `${m.milestone_target}` : "-"}
+                  right={getMilestoneValue(m)}
                   subLeft={subLeft}
                   isLast={false}
                   borderColor={border}
@@ -260,7 +347,7 @@ export default function SummaryScreen() {
                 {progressPercent !== null ? (
                   <View>
                     <Text style={[styles.progressLabel, { color: muted }]}>
-                      Progress: {m.title}
+                      {getProgressLabel(m)}
                     </Text>
                     <View style={[styles.progressRow, { marginBottom: i === milestones.length - 1 ? 12 : 8 }]}>
                       <View
@@ -273,7 +360,7 @@ export default function SummaryScreen() {
                           style={{
                             ...styles.progressFill,
                             width: `${progressPercent}%`,
-                            backgroundColor: accent,
+                            backgroundColor: progressBarColor,
                           }}
                         />
                       </View>
@@ -286,7 +373,7 @@ export default function SummaryScreen() {
                   </View>
                 ) : (
                   <Text style={[styles.noTargetText, { color: muted, marginBottom: i === milestones.length - 1 ? 12 : 8 }]}>
-                    No target date
+                    {getEmptyProgressText(m)}
                   </Text>
                 )}
               </View>
