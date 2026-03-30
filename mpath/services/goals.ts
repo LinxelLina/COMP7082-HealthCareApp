@@ -15,6 +15,7 @@ export type GoalRecord = {
   is_milestone: number;
   milestone_type: string | null;
   milestone_target: number | null;
+  check_in_count: number;
   duration_date: string | null;
   reminder_enabled: number;
   reminder_time: string | null;
@@ -31,6 +32,7 @@ export type CreateGoalInput = {
   is_milestone?: boolean;
   milestone_type?: string | null;
   milestone_target?: number | null;
+  check_in_count?: number;
   duration_date?: string | null;
   reminder_enabled?: boolean;
   reminder_time?: string | null;
@@ -67,7 +69,14 @@ async function ensureColumn(
   const hasColumn = columns.some((column) => column.name === columnName);
 
   if (!hasColumn) {
-    await database.execAsync(`ALTER TABLE goals ADD COLUMN ${columnName} ${definition};`);
+    try {
+      await database.execAsync(`ALTER TABLE goals ADD COLUMN ${columnName} ${definition};`);
+    } catch (error: any) {
+      // If two startup calls try the same migration at once, the second one can safely ignore this.
+      if (!String(error?.message ?? error).includes("duplicate column name")) {
+        throw error;
+      }
+    }
   }
 }
 
@@ -85,6 +94,7 @@ export async function initGoalsDatabase() {
       is_milestone INTEGER NOT NULL DEFAULT 0,
       milestone_type TEXT,
       milestone_target INTEGER,
+      check_in_count INTEGER NOT NULL DEFAULT 0,
       duration_date TEXT,
       reminder_enabled INTEGER NOT NULL DEFAULT 0,
       reminder_time TEXT,
@@ -96,6 +106,7 @@ export async function initGoalsDatabase() {
   await ensureColumn(database, "reminder_enabled", "INTEGER NOT NULL DEFAULT 0");
   await ensureColumn(database, "reminder_time", "TEXT");
   await ensureColumn(database, "reminder_notification_id", "TEXT");
+  await ensureColumn(database, "check_in_count", "INTEGER NOT NULL DEFAULT 0");
 
   return database;
 }
@@ -127,11 +138,12 @@ export async function createGoal(input: CreateGoalInput) {
       is_milestone,
       milestone_type,
       milestone_target,
+      check_in_count,
       duration_date,
       reminder_enabled,
       reminder_time,
       reminder_notification_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     input.title.trim(),
     input.description ?? null,
     input.category ?? null,
@@ -140,6 +152,7 @@ export async function createGoal(input: CreateGoalInput) {
     toInt(input.is_milestone),
     input.milestone_type ?? null,
     input.milestone_target ?? null,
+    input.check_in_count ?? 0,
     input.duration_date ?? null,
     toInt(input.reminder_enabled),
     input.reminder_time ?? null,
@@ -182,6 +195,47 @@ export async function updateGoalMilestone(id: number, input: UpdateMilestoneInpu
     input.milestone_type ?? null,
     input.milestone_target ?? null,
     input.duration_date ?? null,
+    id
+  );
+}
+
+export async function incrementGoalCheckInCount(id: number) {
+  const database = await initGoalsDatabase();
+  const rows = await database.getAllAsync<{
+    check_in_count: number | null;
+    milestone_type: string | null;
+    milestone_target: number | null;
+  }>(
+    `SELECT check_in_count, milestone_type, milestone_target
+      FROM goals
+      WHERE id = ? LIMIT 1`,
+    id
+  );
+
+  const goal = rows[0];
+
+  if (!goal) {
+    return;
+  }
+
+  const currentCheckInCount =
+    typeof goal.check_in_count === "number" && Number.isFinite(goal.check_in_count)
+      ? goal.check_in_count
+      : 0;
+
+  let nextCheckInCount = currentCheckInCount + 1;
+
+  if (
+    goal.milestone_type === "count" &&
+    typeof goal.milestone_target === "number" &&
+    Number.isFinite(goal.milestone_target)
+  ) {
+    nextCheckInCount = Math.min(nextCheckInCount, goal.milestone_target);
+  }
+
+  await database.runAsync(
+    `UPDATE goals SET check_in_count = ? WHERE id = ?`,
+    nextCheckInCount,
     id
   );
 }

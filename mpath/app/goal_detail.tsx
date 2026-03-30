@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Picker } from "@react-native-picker/picker";
 import { useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
 import { Checkbox } from "expo-checkbox";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { getGoalById, updateGoalMilestone } from "@/services/goals";
+import { getGoalById, incrementGoalCheckInCount, updateGoalMilestone } from "@/services/goals";
 
 export default function GoalDetailScreen() {
   const params = useLocalSearchParams<{
@@ -28,6 +28,7 @@ export default function GoalDetailScreen() {
     (params.milestone_type as "" | "streak" | "count") || ""
   );
   const [milestoneTarget, setMilestoneTarget] = useState(params.milestone_target || "");
+  const [checkInCount, setCheckInCount] = useState(0);
   const [hasDuration, setHasDuration] = useState(false);
   const [duration, setDuration] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -89,20 +90,35 @@ export default function GoalDetailScreen() {
     Alert.alert("Saved", "Goal is now a milestone.");
   };
 
-  useEffect(() => {
-    const loadMilestoneValues = async () => {
-      if (!params.goal_id) return;
-      const data = await getGoalById(Number(params.goal_id));
+  const loadMilestoneValues = useCallback(async () => {
+    if (!params.goal_id) return;
+    const data = await getGoalById(Number(params.goal_id));
 
-      if (!data) return;
+    if (!data) return;
 
-      setIsMilestone(!!data.is_milestone);
-      setMilestoneType((data.milestone_type as "" | "streak" | "count") || "");
-      setMilestoneTarget(data.milestone_target != null ? String(data.milestone_target) : "");
-    };
-
-    loadMilestoneValues();
+    setIsMilestone(!!data.is_milestone);
+    setMilestoneType((data.milestone_type as "" | "streak" | "count") || "");
+    setMilestoneTarget(data.milestone_target != null ? String(data.milestone_target) : "");
+    setCheckInCount(data.check_in_count ?? 0);
   }, [params.goal_id]);
+
+  const addCheckIn = async () => {
+    if (!params.goal_id) {
+      Alert.alert("Update failed", "Missing goal id.");
+      return;
+    }
+
+    try {
+      await incrementGoalCheckInCount(Number(params.goal_id));
+      await loadMilestoneValues();
+    } catch (error: any) {
+      Alert.alert("Update failed", error?.message || "Unexpected database error.");
+    }
+  };
+
+  useEffect(() => {
+    loadMilestoneValues();
+  }, [loadMilestoneValues]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -120,6 +136,14 @@ export default function GoalDetailScreen() {
         )}
         {isMilestone && hasMilestoneTarget && (
           <Text style={styles.rowText}>Milestone Target: {params.milestone_target}</Text>
+        )}
+        {isMilestone && milestoneType === "count" && (
+          <>
+            <Text style={styles.rowText}>Check-ins: {checkInCount}</Text>
+            <View style={styles.milestoneSection}>
+              <Button title="Add check-in" onPress={addCheckIn} />
+            </View>
+          </>
         )}
 
         {!isMilestone && (

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Text, Pressable, ScrollView } from "react-native";
+import { View, Text, Pressable, ScrollView, StyleSheet } from "react-native";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,15 +26,14 @@ function Button({
     <Pressable
       onPress={onPress}
       style={({ pressed }) => ({
-        paddingVertical: 10,
-        paddingHorizontal: 12,
-        borderRadius: 12,
+        ...styles.button,
         borderWidth: 1,
         borderColor,
+        backgroundColor: "#ffffff",
         opacity: pressed ? 0.7 : 1,
       })}
     >
-      <Text style={{ fontWeight: "700", color: textColor }}>{label}</Text>
+      <Text style={[styles.buttonText, { color: textColor }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -51,16 +50,17 @@ function Section({
   textColor: string;
 }) {
   return (
-    <View style={{ marginTop: 16 }}>
-      <Text style={{ fontSize: 18, fontWeight: "700", marginBottom: 8, color: textColor }}>
+    <View style={styles.section}>
+      <Text style={[styles.sectionTitle, { color: textColor }]}>
         {title}
       </Text>
       <View
         style={{
-          borderRadius: 14,
+          ...styles.sectionCard,
           overflow: "hidden",
           borderWidth: 1,
           borderColor,
+          backgroundColor: "#ffffff",
         }}
       >
         {children}
@@ -89,27 +89,23 @@ function Row({
   return (
     <View
       style={{
-        paddingVertical: 12,
-        paddingHorizontal: 14,
+        ...styles.row,
         borderBottomWidth: isLast ? 0 : 1,
         borderBottomColor: borderColor,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
       }}
     >
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 16, fontWeight: "600", color: textColor }}>
+        <Text style={[styles.rowTitle, { color: textColor }]}>
           {left}
         </Text>
         {subLeft && (
-          <Text style={{ marginTop: 2, fontSize: 13, color: muted }}>
+          <Text style={[styles.rowSubtext, { color: muted }]}>
             {subLeft}
           </Text>
         )}
       </View>
 
-      <Text style={{ fontSize: 16, fontWeight: "800", color: textColor }}>
+      <Text style={[styles.rowValue, { color: textColor }]}>
         {right}
       </Text>
     </View>
@@ -176,7 +172,8 @@ export default function SummaryScreen() {
   const textColor = theme.text;
   const muted = `${theme.text}AA`;
   const border = theme.icon;
-  const background = theme.background;
+  const background = "#f4f6f8";
+  const accent = "#2e7d32";
 
   const [anchor, setAnchor] = useState(new Date());
   const weekStart = useMemo(() => startOfWeekMonday(anchor), [anchor]);
@@ -208,24 +205,29 @@ export default function SummaryScreen() {
   }, []);
 
   return (
-    <ScrollView style={{ backgroundColor: background }}     contentContainerStyle={{
-      paddingHorizontal: 16,
-      paddingTop: insets.top + 16,
-      paddingBottom: insets.bottom + 24,
-    }}
+    <ScrollView
+      style={{ backgroundColor: background }}
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        paddingTop: insets.top + 16,
+        paddingBottom: insets.bottom + 24,
+      }}
     >
-      <Text style={{ fontSize: 26, fontWeight: "900", color: textColor }}>
-        Weekly Summary
-      </Text>
+      <View style={styles.header}>
+        <Text style={[styles.pageTitle, { color: textColor }]}>
+          Weekly Summary
+        </Text>
+        <Text style={[styles.pageSubtitle, { color: muted }]}>
+          {formatWeekRange(weekStart)} (Mon-Sun)
+        </Text>
+      </View>
 
-      <Text style={{ marginTop: 6, fontSize: 14, color: muted }}>
-        {formatWeekRange(weekStart)} (Mon–Sun)
-      </Text>
-
-      <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
-        <Button label="← Prev" onPress={() => setAnchor(addWeeks(anchor, -1))} borderColor={border} textColor={textColor} />
-        <Button label="This Week" onPress={() => setAnchor(new Date())} borderColor={border} textColor={textColor} />
-        <Button label="Next →" onPress={() => setAnchor(addWeeks(anchor, 1))} borderColor={border} textColor={textColor} />
+      <View style={styles.controlsCard}>
+        <View style={styles.buttonRow}>
+          <Button label="← Prev" onPress={() => setAnchor(addWeeks(anchor, -1))} borderColor={border} textColor={textColor} />
+          <Button label="This Week" onPress={() => setAnchor(new Date())} borderColor={accent} textColor={accent} />
+          <Button label="Next →" onPress={() => setAnchor(addWeeks(anchor, 1))} borderColor={border} textColor={textColor} />
+        </View>
       </View>
 
       <Section title="Milestones" borderColor={border} textColor={textColor}>
@@ -257,36 +259,33 @@ export default function SummaryScreen() {
                 />
                 {progressPercent !== null ? (
                   <View>
-                    <Text style={{ marginHorizontal: 14, marginBottom: 4, fontSize: 13, color: muted }}>
+                    <Text style={[styles.progressLabel, { color: muted }]}>
                       Progress: {m.title}
                     </Text>
-                    <View style={{ marginHorizontal: 14, marginBottom: i === milestones.length - 1 ? 12 : 8, flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <View style={[styles.progressRow, { marginBottom: i === milestones.length - 1 ? 12 : 8 }]}>
                       <View
                         style={{
-                          height: 8,
+                          ...styles.progressTrack,
                           backgroundColor: `${border}33`,
-                          borderRadius: 999,
-                          overflow: "hidden",
-                          flex: 1,
                         }}
                       >
                         <View
                           style={{
-                            height: 8,
+                            ...styles.progressFill,
                             width: `${progressPercent}%`,
-                            backgroundColor: textColor,
+                            backgroundColor: accent,
                           }}
                         />
                       </View>
                       {remainingHoursLabel && (
-                        <Text style={{ fontSize: 12, color: muted, fontWeight: "600" }}>
+                        <Text style={[styles.remainingText, { color: muted }]}>
                           {remainingHoursLabel}
                         </Text>
                       )}
                     </View>
                   </View>
                 ) : (
-                  <Text style={{ marginHorizontal: 14, marginBottom: i === milestones.length - 1 ? 12 : 8, fontSize: 13, color: muted }}>
+                  <Text style={[styles.noTargetText, { color: muted, marginBottom: i === milestones.length - 1 ? 12 : 8 }]}>
                     No target date
                   </Text>
                 )}
@@ -298,3 +297,96 @@ export default function SummaryScreen() {
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    marginBottom: 12,
+  },
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  pageSubtitle: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  controlsCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#dfe6e9",
+    padding: 12,
+    marginBottom: 4,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  button: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+  },
+  buttonText: {
+    fontWeight: "700",
+  },
+  section: {
+    marginTop: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  sectionCard: {
+    borderRadius: 16,
+  },
+  row: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  rowTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  rowSubtext: {
+    marginTop: 2,
+    fontSize: 13,
+  },
+  rowValue: {
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  progressLabel: {
+    marginHorizontal: 14,
+    marginBottom: 4,
+    fontSize: 13,
+  },
+  progressRow: {
+    marginHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: 999,
+    overflow: "hidden",
+    flex: 1,
+  },
+  progressFill: {
+    height: 8,
+  },
+  remainingText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  noTargetText: {
+    marginHorizontal: 14,
+    fontSize: 13,
+  },
+});
