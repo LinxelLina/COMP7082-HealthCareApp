@@ -108,7 +108,7 @@ export default function goal_page() {
               }}
               onPress={() => setOpenNewHabitForm(false)} 
             >
-                <Pressable
+                <View
                   style={{
                     width: '90%',
                     height: '80%',
@@ -116,7 +116,7 @@ export default function goal_page() {
                     borderRadius: 16,
                     padding: 16,
                   }}
-                  onPress={() => {}}
+                  onStartShouldSetResponder={() => true}
                 >
                   <GoalForm onSubmit={(form:GoalForm) => {
                     console.log(form);
@@ -126,7 +126,7 @@ export default function goal_page() {
                     setOpenNewHabitForm(false);
                     refreshListRef.current();
                   }}/>
-                </Pressable>
+                </View>
             </Pressable>
         )}
 
