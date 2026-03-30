@@ -255,10 +255,10 @@ export default function GoalForm({ onSubmit = () => {} }: GoalFormProps) {
 
     onSubmit(form);
     Alert.alert(
-      "You're all set",
+      "You're all done",
       form.reminderEnabled
-        ? "Your goal is ready, and your daily reminder is on."
-        : "Your goal is ready."
+        ? "Your goal is set, and your daily reminder is on."
+        : "Your goal is set."
     );
   }
 
@@ -278,7 +278,7 @@ export default function GoalForm({ onSubmit = () => {} }: GoalFormProps) {
             style={styles.input}
             value={form.goal}
             onChangeText={handleGoalChange}
-            placeholder="Drink Water"
+            placeholder="Call Mom every Monday"
             placeholderTextColor="#7c8c7d"
           />
 
@@ -303,7 +303,7 @@ export default function GoalForm({ onSubmit = () => {} }: GoalFormProps) {
               onValueChange={handleHabitToggle}
               color={form.newHabit ? "#2e7d32" : undefined}
             />
-            <Text style={styles.toggleTitle}>Show this in My Goals</Text>
+            <Text style={styles.toggleTitle}>Show this in Goals</Text>
           </View>
         </View>
 
