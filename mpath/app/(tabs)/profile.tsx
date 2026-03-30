@@ -2,7 +2,7 @@ import { getProfile, updateCharity, updateDisableNotifications, updateNoAds } fr
 import { supabase } from "@/utils/supabase";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Pressable, Switch, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -126,38 +126,154 @@ export default function Profile() {
 
 
   return (
-    <SafeAreaView>
-      <Text>Profile Screen</Text>
-      <Text>Current Charity: {currentCharity?.label ?? "No charity selected"}</Text>
-      <DropDownPicker
-          open={isOpen}
-          value={value}
-          items={items}
-          setOpen={setOpen}
-          setValue={setValue}
-          setItems={setItems}
-          placeholder="Select category"
-          zIndexInverse={1000}
-          zIndex={1000}
-          style={{ borderColor: "#ccc"}}
-          
-        />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Your Profile</Text>
+        <Text style={styles.subtitle}>Manage your charity and app settings.</Text>
 
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginVertical: 8 }}>
-        <Text>Disable notifications</Text>
-        <Switch value={disableNotifications} onValueChange={handleDisableNotificationsChange} />
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Charity</Text>
+          <Text style={styles.cardText}>
+            Current charity: {currentCharity?.label ?? "No charity selected"}
+          </Text>
+          <DropDownPicker
+            open={isOpen}
+            value={value}
+            items={items}
+            setOpen={setOpen}
+            setValue={setValue}
+            setItems={setItems}
+            placeholder="Choose a charity"
+            zIndexInverse={1000}
+            zIndex={1000}
+            style={styles.dropdown}
+            dropDownContainerStyle={styles.dropdownList}
+          />
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Settings</Text>
+
+          <View style={styles.settingRow}>
+            <View style={styles.settingTextBlock}>
+              <Text style={styles.settingTitle}>Disable notifications</Text>
+              <Text style={styles.settingDescription}>Turn off future app reminders.</Text>
+            </View>
+            <Switch value={disableNotifications} onValueChange={handleDisableNotificationsChange} />
+          </View>
+
+          <View style={styles.settingRow}>
+            <View style={styles.settingTextBlock}>
+              <Text style={styles.settingTitle}>No ads</Text>
+              <Text style={styles.settingDescription}>Skip the ad video in the app.</Text>
+            </View>
+            <Switch value={noAds} onValueChange={handleNoAdsChange} />
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Impact</Text>
+          <Text style={styles.pointsText}>
+            Current contributions overall: {profile?.total_donations ?? 0}
+          </Text>
+
+          <Pressable style={styles.actionButton} onPress={handleAdVideoPress}>
+            <Text style={styles.actionButtonText}>Test Ad-Video</Text>
+          </Pressable>
+        </View>
       </View>
-
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginVertical: 8 }}>
-        <Text>No ads</Text>
-        <Switch value={noAds} onValueChange={handleNoAdsChange} />
-      </View>
-
-      <Pressable onPress={handleAdVideoPress}>
-        <Text>Test Ad-Video</Text>
-      </Pressable>
-
-      <Text>Current Contributions Overall: {profile?.total_donations ?? 0}</Text>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f4f6f8",
+  },
+  content: {
+    padding: 16,
+  },
+  title: {
+    color: "#2f3e46",
+    fontSize: 28,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  subtitle: {
+    color: "#5e6b61",
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 14,
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#dfe6e9",
+    padding: 14,
+    marginBottom: 12,
+  },
+  cardTitle: {
+    color: "#2f3e46",
+    fontSize: 17,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  cardText: {
+    color: "#2f3e46",
+    fontSize: 15,
+    marginBottom: 10,
+  },
+  dropdown: {
+    borderColor: "#cfe0d1",
+    borderRadius: 14,
+    backgroundColor: "#fbfdfb",
+  },
+  dropdownList: {
+    borderColor: "#cfe0d1",
+    borderRadius: 14,
+  },
+  settingRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#f7faf7",
+    borderWidth: 1,
+    borderColor: "#dce8dd",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  settingTextBlock: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  settingTitle: {
+    color: "#2f3e46",
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  settingDescription: {
+    color: "#6d7d70",
+    fontSize: 13,
+  },
+  pointsText: {
+    color: "#2f3e46",
+    fontSize: 15,
+    marginBottom: 12,
+  },
+  actionButton: {
+    backgroundColor: "#2e7d32",
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  actionButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+});
