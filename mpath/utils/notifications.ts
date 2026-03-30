@@ -1,5 +1,6 @@
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
+import { getProfile } from "@/services/profile";
 
 export async function initializeNotifications() {
   Notifications.setNotificationHandler({
@@ -34,6 +35,13 @@ export async function requestNotificationPermission() {
 }
 
 export async function scheduleDailyGoalReminder(goalTitle: string, reminderTime: string) {
+  const profile = await getProfile();
+
+  // Skip future reminders when the user turns notifications off in profile settings.
+  if (profile?.disable_notifications) {
+    return null;
+  }
+
   const hasPermission = await requestNotificationPermission();
 
   if (!hasPermission) {

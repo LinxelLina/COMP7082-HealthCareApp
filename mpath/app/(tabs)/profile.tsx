@@ -1,8 +1,8 @@
-import { router, useFocusEffect } from "expo-router";
-import { getCharity, getProfile, updateCharity } from "@/services/profile";
+import { getProfile, updateCharity, updateDisableNotifications, updateNoAds } from "@/services/profile";
 import { supabase } from "@/utils/supabase";
+import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import { Alert, Pressable, Switch, Text, View } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -14,6 +14,8 @@ type Charity = {
 type ProfileRecord = {
   current_charity: string | null;
   total_donations: number;
+  disable_notifications: number;
+  no_ads: number;
 };
 
 
@@ -23,12 +25,20 @@ export default function Profile() {
   const [isOpen, setOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [items, setItems] = useState<Charity[]>([]);
+  const [disableNotifications, setDisableNotifications] = useState(false);
+  const [noAds, setNoAds] = useState(false);
+
+  function applyProfileData(profileData: ProfileRecord | null) {
+    setProfile(profileData);
+    setDisableNotifications(Boolean(profileData?.disable_notifications));
+    setNoAds(Boolean(profileData?.no_ads));
+  }
 
   useFocusEffect(
     useCallback(() => {
       async function refreshProfile() {
         const profileData = await getProfile();
-        setProfile(profileData);
+        applyProfileData(profileData);
       }
       refreshProfile();
     }, [])
@@ -53,7 +63,7 @@ export default function Profile() {
         setItems(charityList);
 
         const profileData = await getProfile();
-        setProfile(profileData);
+        applyProfileData(profileData);
 
         if(profileData?.current_charity) {
           const match = charityList.find((c) => c.label === profileData.current_charity);
@@ -92,6 +102,28 @@ export default function Profile() {
     updateCurrentCharity(); 
   }, [value]);
 
+  async function handleDisableNotificationsChange(value: boolean) {
+    // True is disabled notifications (after setting has changed)
+    setDisableNotifications(value);
+    await updateDisableNotifications(value);
+  }
+
+  async function handleNoAdsChange(value: boolean) {
+    // True means no ads for the user.
+    setNoAds(value);
+    await updateNoAds(value);
+  }
+
+  function handleAdVideoPress() {
+    // Skip the ad video when the user has chosen the no-ads option.
+    if (noAds) {
+      Alert.alert("No ads for you: we respect your choice.");
+      return;
+    }
+
+    router.push({ pathname: "/ad_video", params: { charity_id: String(value) } });
+  }
+
 
   return (
     <SafeAreaView>
@@ -111,7 +143,17 @@ export default function Profile() {
           
         />
 
-      <Pressable onPress={() => router.push({ pathname: "/ad_video", params: { charity_id: String(value) } })}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginVertical: 8 }}>
+        <Text>Disable notifications</Text>
+        <Switch value={disableNotifications} onValueChange={handleDisableNotificationsChange} />
+      </View>
+
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginVertical: 8 }}>
+        <Text>No ads</Text>
+        <Switch value={noAds} onValueChange={handleNoAdsChange} />
+      </View>
+
+      <Pressable onPress={handleAdVideoPress}>
         <Text>Test Ad-Video</Text>
       </Pressable>
 
