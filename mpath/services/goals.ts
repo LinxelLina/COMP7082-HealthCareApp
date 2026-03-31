@@ -70,7 +70,7 @@ async function ensureColumn(
 
   if (!hasColumn) {
     try {
-      await database.execAsync(`ALTER TABLE goals ADD COLUMN ${columnName} ${definition};`);
+      await database.runAsync(`ALTER TABLE goals ADD COLUMN ${columnName} ${definition}`);
     } catch (error: any) {
       // If two startup calls try the same migration at once, the second one can safely ignore this.
       if (!String(error?.message ?? error).includes("duplicate column name")) {
@@ -83,7 +83,7 @@ async function ensureColumn(
 export async function initGoalsDatabase() {
   const database = await getDb();
 
-  await database.execAsync(`
+  await database.runAsync(`
     CREATE TABLE IF NOT EXISTS goals (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
@@ -100,7 +100,7 @@ export async function initGoalsDatabase() {
       reminder_time TEXT,
       reminder_notification_id TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    );
+    )
   `);
 
   await ensureColumn(database, "reminder_enabled", "INTEGER NOT NULL DEFAULT 0");
