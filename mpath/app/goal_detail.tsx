@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Picker } from "@react-native-picker/picker";
 import { useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Button, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Checkbox } from "expo-checkbox";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { getGoalById, incrementGoalCheckInCount, updateGoalMilestone } from "@/services/goals";
@@ -20,8 +20,14 @@ export default function GoalDetailScreen() {
     milestone_target?: string;
     duration_date?: string;
   }>();
+
   const hasDescription = !!params.description?.trim();
   const hasSavedDuration = !!params.duration_date?.trim();
+  const isHabitGoal = params.is_habit === "true";
+  const isCompleted = params.is_completed === "true";
+  const statusText = isCompleted ? "Completed" : "In progress";
+  const goalTypeText = isHabitGoal ? "Habit goal" : "One-time goal";
+
   const [isMilestone, setIsMilestone] = useState(params.is_milestone === "true");
   const [showMilestoneForm, setShowMilestoneForm] = useState(false);
   const [milestoneType, setMilestoneType] = useState<"" | "streak" | "count">(
@@ -32,9 +38,10 @@ export default function GoalDetailScreen() {
   const [hasDuration, setHasDuration] = useState(false);
   const [duration, setDuration] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const hasMilestoneType = !!milestoneType.trim();
   const hasMilestoneTarget = !!milestoneTarget.trim();
+
   let durationText = "";
+  let targetDateLabel = "";
 
   if (hasSavedDuration) {
     const endDate = new Date(params.duration_date as string);
@@ -42,6 +49,12 @@ export default function GoalDetailScreen() {
     const oneDay = 24 * 60 * 60 * 1000;
 
     if (!Number.isNaN(endDate.getTime())) {
+      targetDateLabel = endDate.toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+
       if (diff < 0) {
         durationText = `Overdue by ${(Math.abs(diff) / oneDay).toFixed(1)} days`;
       } else {
@@ -50,20 +63,29 @@ export default function GoalDetailScreen() {
     }
   }
 
+  const progressSummaryText =
+    milestoneType === "count" && hasMilestoneTarget
+      ? `${checkInCount} of ${milestoneTarget} check-ins`
+      : `Check-ins: ${checkInCount}`;
+
   const saveMilestone = async () => {
     if (!milestoneType) {
       Alert.alert("Missing milestone type", "Please choose a milestone type.");
       return;
     }
+
     const parsedTarget = milestoneTarget.trim() === "" ? null : parseInt(milestoneTarget, 10);
+
     if (parsedTarget !== null && !Number.isFinite(parsedTarget)) {
       Alert.alert("Invalid milestone target", "Please enter a valid milestone target.");
       return;
     }
+
     if (hasDuration && duration < new Date()) {
       Alert.alert("Invalid duration", "Target date cannot be in the past.");
       return;
     }
+
     if (!params.goal_id) {
       Alert.alert("Update failed", "Missing goal id.");
       return;
@@ -74,6 +96,7 @@ export default function GoalDetailScreen() {
       milestone_type: milestoneType,
       milestone_target: parsedTarget,
     };
+
     if (hasDuration) {
       updatePayload.duration_date = duration.toISOString();
     }
@@ -123,30 +146,48 @@ export default function GoalDetailScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>{params.title || "Goal Detail"}</Text>
+      <Text style={styles.subtitle}>A quick look at your goal and progress.</Text>
 
-      <View style={styles.infoBox}>
-        <Text style={styles.rowText}>Category: {params.category || "-"}</Text>
-        <Text style={styles.rowText}>Habit: {params.is_habit || "-"}</Text>
-        <Text style={styles.rowText}>Completed: {params.is_completed || "-"}</Text>
-        {hasDescription && <Text style={styles.rowText}>Description: {params.description}</Text>}
-        {hasSavedDuration && durationText && <Text style={styles.rowText}>Duration: {durationText}</Text>}
-        {isMilestone && <Text style={styles.rowText}>Milestone Enabled: true</Text>}
-        {isMilestone && hasMilestoneType && (
-          <Text style={styles.rowText}>Milestone Type: {params.milestone_type}</Text>
-        )}
-        {isMilestone && hasMilestoneTarget && (
-          <Text style={styles.rowText}>Milestone Target: {params.milestone_target}</Text>
-        )}
-        {isMilestone && milestoneType === "count" && (
-          <>
-            <Text style={styles.rowText}>Check-ins: {checkInCount}</Text>
-            <View style={styles.milestoneSection}>
-              <Button title="Add check-in" onPress={addCheckIn} />
-            </View>
-          </>
-        )}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Overview</Text>
+        <Text style={styles.rowText}>Category: {params.category || "Other"}</Text>
+        <Text style={styles.rowText}>Type: {goalTypeText}</Text>
+        <Text style={styles.rowText}>Status: {statusText}</Text>
+        {hasDescription && <Text style={styles.rowText}>Why it matters: {params.description}</Text>}
+      </View>
 
-        {!isMilestone && (
+      {isMilestone ? (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Progress</Text>
+
+          {milestoneType === "count" && (
+            <>
+              <Text style={styles.rowText}>Check-in goal</Text>
+              {hasMilestoneTarget && (
+                <Text style={styles.rowText}>Target: {milestoneTarget} check-ins</Text>
+              )}
+              <Text style={styles.rowText}>{progressSummaryText}</Text>
+              <Pressable style={styles.primaryButton} onPress={addCheckIn}>
+                <Text style={styles.primaryButtonText}>Add check-in</Text>
+              </Pressable>
+            </>
+          )}
+
+          {milestoneType === "streak" && (
+            <>
+              <Text style={styles.rowText}>Target date goal</Text>
+              {targetDateLabel ? (
+                <Text style={styles.rowText}>Target date: {targetDateLabel}</Text>
+              ) : (
+                <Text style={styles.rowText}>Add a target date to track this goal.</Text>
+              )}
+              {durationText && <Text style={styles.rowText}>{durationText}</Text>}
+            </>
+          )}
+        </View>
+      ) : (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Milestone</Text>
           <View style={styles.milestoneSection}>
             <Button
               title="Set as milestone"
@@ -157,9 +198,10 @@ export default function GoalDetailScreen() {
                 <Text style={styles.formLabel}>Milestone type</Text>
                 <Picker selectedValue={milestoneType} onValueChange={(value) => setMilestoneType(value)}>
                   <Picker.Item label="Select milestone type" value="" />
-                  <Picker.Item label="Streak" value="streak" />
-                  <Picker.Item label="Count" value="count" />
+                  <Picker.Item label="Target date goal" value="streak" />
+                  <Picker.Item label="Check-in goal" value="count" />
                 </Picker>
+
                 <Text style={styles.formLabel}>Milestone target</Text>
                 <TextInput
                   style={styles.milestoneInput}
@@ -168,6 +210,7 @@ export default function GoalDetailScreen() {
                   keyboardType="numeric"
                   placeholder="Milestone target"
                 />
+
                 <View style={styles.durationSection}>
                   <Checkbox
                     style={styles.checkbox}
@@ -177,8 +220,9 @@ export default function GoalDetailScreen() {
                       setShowDatePicker(value);
                     }}
                   />
-                  <Text>Set target date?</Text>
+                  <Text>Add a target date?</Text>
                 </View>
+
                 {showDatePicker && (
                   <DateTimePicker
                     testID="dateTimePicker"
@@ -193,13 +237,14 @@ export default function GoalDetailScreen() {
                     }}
                   />
                 )}
-                {hasDuration && <Text>selected: {duration.toLocaleString()}</Text>}
+
+                {hasDuration && <Text style={styles.helperText}>Target date: {duration.toLocaleString()}</Text>}
                 <Button title="Save Milestone" onPress={saveMilestone} />
               </>
             )}
           </View>
-        )}
-      </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -207,36 +252,56 @@ export default function GoalDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f4f6f8",
     padding: 16,
   },
   title: {
-    fontSize: 22,
+    color: "#2f3e46",
+    fontSize: 28,
     fontWeight: "700",
-    marginBottom: 16,
+    marginBottom: 4,
   },
-  infoBox: {
+  subtitle: {
+    color: "#5e6b61",
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: "#f9f9f9",
+    borderColor: "#dfe6e9",
+    padding: 14,
+    marginBottom: 12,
+  },
+  cardTitle: {
+    color: "#2f3e46",
+    fontSize: 17,
+    fontWeight: "700",
+    marginBottom: 8,
   },
   rowText: {
+    color: "#2f3e46",
     marginBottom: 8,
+    fontSize: 15,
   },
   milestoneSection: {
     marginTop: 8,
   },
   formLabel: {
+    color: "#2f3e46",
     marginTop: 8,
     marginBottom: 4,
+    fontSize: 15,
     fontWeight: "600",
   },
   milestoneInput: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
+    borderColor: "#cfe0d1",
+    borderRadius: 14,
+    backgroundColor: "#fbfdfb",
+    padding: 12,
     marginTop: 8,
   },
   durationSection: {
@@ -246,5 +311,21 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     marginRight: 8,
+  },
+  helperText: {
+    color: "#5e6b61",
+    marginVertical: 8,
+  },
+  primaryButton: {
+    backgroundColor: "#2e7d32",
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginTop: 4,
+  },
+  primaryButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
