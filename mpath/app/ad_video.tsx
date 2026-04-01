@@ -1,10 +1,9 @@
-import { ResizeMode, Video } from "expo-av";
-import { router, useFocusEffect } from "expo-router";
-import { useCallback, useEffect } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
-import { useLocalSearchParams } from "expo-router";
-import { supabase } from "@/utils/supabase";
 import { addDonation } from "@/services/profile";
+import { supabase } from "@/utils/supabase";
+import { ResizeMode, Video } from "expo-av";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback } from "react";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function AdVideoScreen() {
 
@@ -42,7 +41,7 @@ export default function AdVideoScreen() {
     <View style={styles.container}>
       <Video
         style={styles.video}
-        source={{ uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" }}
+        source={{ uri: "https://samplelib.com/lib/preview/mp4/sample-5s.mp4" }}
         useNativeControls
         resizeMode={ResizeMode.COVER}
         isLooping

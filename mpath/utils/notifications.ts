@@ -34,21 +34,30 @@ export async function requestNotificationPermission() {
   return requestedPermissions.status === "granted";
 }
 
-export async function scheduleDailyGoalReminder(goalTitle: string, reminderTime: string) {
+async function prepareLocalNotifications() {
   const profile = await getProfile();
 
-  // Skip future reminders when the user turns notifications off in profile settings.
+  // Skip notifications when the user turns them off in profile settings.
   if (profile?.disable_notifications) {
-    return null;
+    return false;
   }
 
   const hasPermission = await requestNotificationPermission();
 
   if (!hasPermission) {
-    return null;
+    return false;
   }
 
   await initializeNotifications();
+  return true;
+}
+
+export async function scheduleDailyGoalReminder(goalTitle: string, reminderTime: string) {
+  const canSendNotifications = await prepareLocalNotifications();
+
+  if (!canSendNotifications) {
+    return null;
+  }
 
   const [hourText, minuteText] = reminderTime.split(":");
   const hour = Number(hourText);
@@ -66,6 +75,24 @@ export async function scheduleDailyGoalReminder(goalTitle: string, reminderTime:
       minute,
       channelId: "default",
     },
+  });
+}
+
+export async function sendLocalNotificationNow(title: string, body: string) {
+  const canSendNotifications = await prepareLocalNotifications();
+
+  if (!canSendNotifications) {
+    return null;
+  }
+
+  return Notifications.scheduleNotificationAsync({
+    content: {
+      title,
+      body,
+      sound: "default",
+      ...(Platform.OS === "android" ? { channelId: "default" } : {}),
+    },
+    trigger: null,
   });
 }
 

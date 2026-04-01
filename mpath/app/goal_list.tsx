@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     backgroundColor: "white",
   },
-    categoryButton: {
+  categoryButton: {
     // flex: 1,
     padding: 16,
     alignItems: "center",

@@ -95,12 +95,12 @@ export default function CharityForm() {
         />
         <Picker selectedValue={form.type} onValueChange={(value) => setForm({...form, type:value})}>
             <Picker.Item label="Select a type" value="" />
-            <Picker.Item label="Medical" value="medical" />
-            <Picker.Item label="Education" value="education" />
-            <Picker.Item label="Environment" value="environment" />
-            <Picker.Item label="Animal Welfare" value="animal_welfare" />
-            <Picker.Item label="Disaster Relief" value="disaster_relief" />
-            <Picker.Item label="Other" value="other" />
+            <Picker.Item label="Medical" value="Medical" />
+            <Picker.Item label="Education" value="Education" />
+            <Picker.Item label="Environment" value="Environment" />
+            <Picker.Item label="Animal Welfare" value="Animal_Welfare" />
+            <Picker.Item label="Disaster Relief" value="Disaster_Relief" />
+            <Picker.Item label="Other" value="Other" />
         </Picker>
 
         <TextInput
