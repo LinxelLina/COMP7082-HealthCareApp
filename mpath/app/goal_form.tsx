@@ -263,7 +263,7 @@ export default function GoalForm({ onSubmit = () => {} }: GoalFormProps) {
   }
 
   return (
-    <View style={styles.container}>
+    // <View style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
@@ -427,7 +427,7 @@ export default function GoalForm({ onSubmit = () => {} }: GoalFormProps) {
           <Text style={styles.primaryButtonText}>Save Goal</Text>
         </Pressable>
       </ScrollView>
-    </View>
+    // </View>
   );
 }
 
