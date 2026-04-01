@@ -243,6 +243,10 @@ function getEmptyProgressText(goal: MilestoneGoal): string {
   return "Add a target date to track progress.";
 }
 
+function isCompletedMilestone(progressPercent: number | null): boolean {
+  return progressPercent !== null && progressPercent >= 100;
+}
+
 export default function SummaryScreen() {
   const insets = useSafeAreaInsets();
   const scheme = useColorScheme();
@@ -332,6 +336,8 @@ export default function SummaryScreen() {
             const subLeft = getMilestoneSubtext(m);
             const remainingHoursLabel = getRemainingHoursLabel(m);
             const progressBarColor = progressPercent !== null ? getProgressBarColor(progressPercent) : accent;
+            const isCompleted = isCompletedMilestone(progressPercent);
+            const progressBlockMargin = i === milestones.length - 1 ? 12 : 8;
 
             return (
               <View key={m.goal_id}>
@@ -345,11 +351,26 @@ export default function SummaryScreen() {
                   muted={muted}
                 />
                 {progressPercent !== null ? (
-                  <View>
-                    <Text style={[styles.progressLabel, { color: muted }]}>
-                      {getProgressLabel(m)}
-                    </Text>
-                    <View style={[styles.progressRow, { marginBottom: i === milestones.length - 1 ? 12 : 8 }]}>
+                  <View
+                    style={[
+                      styles.progressBlock,
+                      isCompleted && styles.completedBlock,
+                      { marginBottom: progressBlockMargin },
+                    ]}
+                  >
+                    <View style={styles.progressHeader}>
+                      {!isCompleted && (
+                        <Text style={[styles.progressLabel, { color: muted }]}>
+                          {getProgressLabel(m)}
+                        </Text>
+                      )}
+                      {isCompleted && (
+                        <View style={styles.completedBadge}>
+                          <Text style={styles.completedBadgeText}>✓ Completed</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={styles.progressRow}>
                       <View
                         style={{
                           ...styles.progressTrack,
@@ -364,12 +385,17 @@ export default function SummaryScreen() {
                           }}
                         />
                       </View>
-                      {remainingHoursLabel && (
+                      {!isCompleted && remainingHoursLabel && (
                         <Text style={[styles.remainingText, { color: muted }]}>
                           {remainingHoursLabel}
                         </Text>
                       )}
                     </View>
+                    {isCompleted && (
+                      <Text style={styles.completedSupportText}>
+                        Nice work staying consistent.
+                      </Text>
+                    )}
                   </View>
                 ) : (
                   <Text style={[styles.noTargetText, { color: muted, marginBottom: i === milestones.length - 1 ? 12 : 8 }]}>
@@ -448,10 +474,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "800",
   },
-  progressLabel: {
+  progressBlock: {
+    marginBottom: 8,
+  },
+  completedBlock: {
+    marginHorizontal: 10,
+    marginTop: 2,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: "#ecfdf3",
+  },
+  progressHeader: {
     marginHorizontal: 14,
-    marginBottom: 4,
+    marginBottom: 3,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  progressLabel: {
     fontSize: 13,
+  },
+  completedBadge: {
+    backgroundColor: "#d1fae5",
+    borderRadius: 999,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+  },
+  completedBadgeText: {
+    color: "#166534",
+    fontSize: 12,
+    fontWeight: "700",
   },
   progressRow: {
     marginHorizontal: 14,
@@ -469,6 +521,13 @@ const styles = StyleSheet.create({
     height: 8,
   },
   remainingText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  completedSupportText: {
+    marginTop: 5,
+    marginHorizontal: 14,
+    color: "#166534",
     fontSize: 12,
     fontWeight: "600",
   },
