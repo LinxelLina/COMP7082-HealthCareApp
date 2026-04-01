@@ -4,7 +4,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from "@react-native-picker/picker";
 import { Checkbox } from 'expo-checkbox';
 import { useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {ScrollView} from "react-native-gesture-handler";
 
 type GoalFormValues = {
   goal: string;
