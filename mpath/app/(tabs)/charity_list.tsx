@@ -7,7 +7,7 @@ import { supabase } from "@/utils/supabase";
 import * as WebBrowser from "expo-web-browser";
 import { router } from "expo-router";
 
-type Charity_Category = "Education" | "Environment" | "Animal_Welfare" | "Disaster_Relief" | "Other";
+type Charity_Category = "Education" | "Environment" | "Animal_Welfare" | "Disaster_Relief" | "Medical" |"Other";
 
 type Charity = {
     id: string;
@@ -19,6 +19,14 @@ type Charity = {
     funds: number;
 };
 
+  const CHARITYCATEGORYNAMES: Record<Charity_Category, string> = {
+      Education: "Education",
+      Environment: "Environment",
+      Animal_Welfare: "Animal Welfare",
+      Disaster_Relief: "Disaster Relief",
+      Medical: "Medical",
+      Other: "Other"
+  }
 
 export default function charity_list() {
     const [charityList, setCharityList] = useState<Charity[]>([]);
@@ -112,6 +120,7 @@ export default function charity_list() {
           placeholder="Select category"
           zIndexInverse={1000}
           zIndex={1000}
+          style={{ borderColor: "#ccc"}}
         />
 
         <FlatList
@@ -119,12 +128,22 @@ export default function charity_list() {
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
             <Pressable onLongPress={() => {openForm(item.id)}} style={styles.charityItem}>
+              <View style={styles.rowContent}>
+              <View style={styles.categoryColumn}>
+              <View style={styles.categoryPill}>
+                <Text style={styles.categoryText}>{CHARITYCATEGORYNAMES[item.category as Charity_Category]}</Text>
+                </View>
+                </View>
                 <Text style={styles.charityText}>{item.name}</Text>
+                </View>
+
+
            </Pressable>
             )}         
             ItemSeparatorComponent={() => <View style={styles.separator2} />}   contentInsetAdjustmentBehavior="never"
             automaticallyAdjustContentInsets={false}
             contentContainerStyle={{ paddingTop: 0 }}
+            style={styles.content}
         />
         
         <Modal
@@ -183,8 +202,14 @@ export default function charity_list() {
             </Pressable>
         </Modal>
 
-        <Pressable onPress={() => router.push("../charity_graph")}>
+        <Pressable onPress={() => router.push("../charity_graph")}
+          style={{padding: 16, backgroundColor: "#007AFF", borderRadius: 8, alignItems: "center", margin: 16}}>
           <Text>Go to Charity Graph</Text>
+        </Pressable>
+
+        <Pressable onPress={() => router.push("../charity_form")}
+          style={{padding: 16, backgroundColor: "#176e4e", borderRadius: 8, alignItems: "center", margin: 16}}>
+          <Text>Go to Charity Form</Text>
         </Pressable>
     </SafeAreaView>
     );
@@ -229,10 +254,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     alignItems: "center",
-  },
-  categoryText: {
-    fontWeight: "600",
-    color: "#333",
   },
     modalOverlay: {
     flex: 1,
@@ -282,4 +303,27 @@ modalLabel: {
   color: "#555",
   fontSize:18,
 },
+  categoryText: {
+    color: "#2e7d32",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+   categoryPill: {
+    backgroundColor: "#eef6ef",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    alignSelf: "flex-start",
+  },
+    categoryColumn: {
+    width: 100,
+    marginRight: 10,
+  },
+    rowContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  content:{
+    paddingHorizontal: 8,
+  }
 });
