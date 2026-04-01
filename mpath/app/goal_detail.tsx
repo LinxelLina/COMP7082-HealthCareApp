@@ -1,11 +1,32 @@
-import { useCallback, useEffect, useState } from "react";
-import { Picker } from "@react-native-picker/picker";
-import { useLocalSearchParams } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Alert, Button, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { Checkbox } from "expo-checkbox";
+import {
+  getGoalById,
+  incrementGoalCheckInCount,
+  setGoalCheckInCountToMilestoneTarget,
+  updateGoalMilestone,
+} from "@/services/goals";
+import { sendLocalNotificationNow } from "@/utils/notifications";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { getGoalById, incrementGoalCheckInCount, updateGoalMilestone } from "@/services/goals";
+import { Picker } from "@react-native-picker/picker";
+import { Checkbox } from "expo-checkbox";
+import { useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, Button, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+const HYDRATION_DEMO_GOAL_TITLE = "drink water daily";
+const HYDRATION_DEMO_NOTIFICATION_TITLE = "Hydration milestone complete";
+const HYDRATION_DEMO_NOTIFICATION_BODY =
+  "Your memory, cognitive performance, and energy levels can be measurably improved because you’re staying hydrated.";
+
+function normalizeGoalTitle(value: string | string[] | undefined) {
+  const title = Array.isArray(value) ? value[0] : value;
+
+  if (!title) {
+    return "";
+  }
+
+  return title.trim().replace(/\s+/g, " ").toLowerCase();
+}
 
 export default function GoalDetailScreen() {
   const params = useLocalSearchParams<{
@@ -27,6 +48,7 @@ export default function GoalDetailScreen() {
   const isCompleted = params.is_completed === "true";
   const statusText = isCompleted ? "Completed" : "In progress";
   const goalTypeText = isHabitGoal ? "Habit goal" : "One-time goal";
+  const goalId = params.goal_id ? Number(params.goal_id) : null;
 
   const [isMilestone, setIsMilestone] = useState(params.is_milestone === "true");
   const [showMilestoneForm, setShowMilestoneForm] = useState(false);
@@ -38,7 +60,12 @@ export default function GoalDetailScreen() {
   const [hasDuration, setHasDuration] = useState(false);
   const [duration, setDuration] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isHydrationDemoLoading, setIsHydrationDemoLoading] = useState(false);
   const hasMilestoneTarget = !!milestoneTarget.trim();
+  const normalizedTitle = normalizeGoalTitle(params.title);
+  const isHydrationDemoGoal = normalizedTitle === HYDRATION_DEMO_GOAL_TITLE;
+  const showHydrationDemoTrigger =
+    isHydrationDemoGoal && isMilestone && milestoneType === "count" && hasMilestoneTarget;
 
   let durationText = "";
   let targetDateLabel = "";
@@ -86,7 +113,7 @@ export default function GoalDetailScreen() {
       return;
     }
 
-    if (!params.goal_id) {
+    if (goalId === null) {
       Alert.alert("Update failed", "Missing goal id.");
       return;
     }
@@ -102,7 +129,7 @@ export default function GoalDetailScreen() {
     }
 
     try {
-      await updateGoalMilestone(Number(params.goal_id), updatePayload);
+      await updateGoalMilestone(goalId, updatePayload);
     } catch (error: any) {
       Alert.alert("Update failed", error?.message || "Unexpected database error.");
       return;
@@ -114,8 +141,11 @@ export default function GoalDetailScreen() {
   };
 
   const loadMilestoneValues = useCallback(async () => {
-    if (!params.goal_id) return;
-    const data = await getGoalById(Number(params.goal_id));
+    if (goalId === null) {
+      return;
+    }
+
+    const data = await getGoalById(goalId);
 
     if (!data) return;
 
@@ -123,19 +153,55 @@ export default function GoalDetailScreen() {
     setMilestoneType((data.milestone_type as "" | "streak" | "count") || "");
     setMilestoneTarget(data.milestone_target != null ? String(data.milestone_target) : "");
     setCheckInCount(data.check_in_count ?? 0);
-  }, [params.goal_id]);
+  }, [goalId]);
 
   const addCheckIn = async () => {
-    if (!params.goal_id) {
+    if (goalId === null) {
       Alert.alert("Update failed", "Missing goal id.");
       return;
     }
 
     try {
-      await incrementGoalCheckInCount(Number(params.goal_id));
+      await incrementGoalCheckInCount(goalId);
       await loadMilestoneValues();
     } catch (error: any) {
       Alert.alert("Update failed", error?.message || "Unexpected database error.");
+    }
+  };
+
+  const triggerHydrationDemo = async () => {
+    if (goalId === null) {
+      Alert.alert("Demo unavailable", "Missing goal id.");
+      return;
+    }
+
+    setIsHydrationDemoLoading(true);
+
+    try {
+      const target = await setGoalCheckInCountToMilestoneTarget(goalId);
+
+      if (target == null) {
+        Alert.alert("Demo unavailable", "This goal is missing a valid check-in target.");
+        return;
+      }
+
+      await loadMilestoneValues();
+
+      const notificationId = await sendLocalNotificationNow(
+        HYDRATION_DEMO_NOTIFICATION_TITLE,
+        HYDRATION_DEMO_NOTIFICATION_BODY
+      );
+
+      if (!notificationId) {
+        Alert.alert(
+          "Milestone updated",
+          "The hydration milestone was completed, but the notification could not be shown."
+        );
+      }
+    } catch (error: any) {
+      Alert.alert("Demo failed", error?.message || "Unexpected database error.");
+    } finally {
+      setIsHydrationDemoLoading(false);
     }
   };
 
@@ -170,6 +236,18 @@ export default function GoalDetailScreen() {
               <Pressable style={styles.primaryButton} onPress={addCheckIn}>
                 <Text style={styles.primaryButtonText}>Add check-in</Text>
               </Pressable>
+              {showHydrationDemoTrigger && (
+                <Pressable
+                  onPress={triggerHydrationDemo}
+                  disabled={isHydrationDemoLoading}
+                  hitSlop={8}
+                  style={styles.demoTrigger}
+                >
+                  <Text style={styles.demoTriggerText}>
+                    {isHydrationDemoLoading ? "Triggering hydration demo..." : "Hydration demo"}
+                  </Text>
+                </Pressable>
+              )}
             </>
           )}
 
@@ -327,5 +405,17 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 16,
     fontWeight: "700",
+  },
+  demoTrigger: {
+    alignSelf: "center",
+    marginTop: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  demoTriggerText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "600",
+    textDecorationLine: "underline",
   },
 });

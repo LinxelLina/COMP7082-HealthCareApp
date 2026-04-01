@@ -240,6 +240,38 @@ export async function incrementGoalCheckInCount(id: number) {
   );
 }
 
+export async function setGoalCheckInCountToMilestoneTarget(id: number) {
+  const database = await initGoalsDatabase();
+  const rows = await database.getAllAsync<{
+    milestone_type: string | null;
+    milestone_target: number | null;
+  }>(
+    `SELECT milestone_type, milestone_target
+      FROM goals
+      WHERE id = ? LIMIT 1`,
+    id
+  );
+
+  const goal = rows[0];
+
+  if (
+    !goal ||
+    goal.milestone_type !== "count" ||
+    typeof goal.milestone_target !== "number" ||
+    !Number.isFinite(goal.milestone_target)
+  ) {
+    return null;
+  }
+
+  await database.runAsync(
+    `UPDATE goals SET check_in_count = ? WHERE id = ?`,
+    goal.milestone_target,
+    id
+  );
+
+  return goal.milestone_target;
+}
+
 export async function deleteGoal(id: number) {
   const database = await initGoalsDatabase();
   const rows = await database.getAllAsync<{ reminder_notification_id: string | null }>(
