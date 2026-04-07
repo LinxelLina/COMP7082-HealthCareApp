@@ -129,7 +129,6 @@ npm install
 EXPO_PUBLIC_SUPABASE_URL=your-project-url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-
 These values are needed for the charity-related screens and remote contribution features.
 
 4. Start the Expo dev server:
@@ -145,6 +144,21 @@ to solve networking issues.
 ### Linting
 
 npm run lint
+
+### Testing with Jest
+
+We now have a small Jest setup in the project for automated testing.
+
+To run the tests:
+
+npm test
+
+## Continuous Integration Pipeline
+
+- This project uses GitHub Actions to continuously integrate on every pull request and on pushes to the main branch of the repo.
+- The pipeline automatically installs dependencies, runs lint, and runs tests.
+- Its purpose is to catch breaks early and improve reliability by validating code automatically before and / or after integration.
+- The project prioritised CI over full CD because the repo is still in the prototyping stage. The most meaningful automation at this stage is validating installation, code quality, and test results on each change
 
 ## Known limitations / rough edges
 
