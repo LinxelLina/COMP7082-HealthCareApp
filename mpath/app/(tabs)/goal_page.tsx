@@ -1,12 +1,8 @@
-import {use, useEffect, useRef, useState } from "react";
+import {useRef, useState } from "react";
 import { View, Text, StyleSheet, FlatList, Button, Pressable, Modal, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import  SwipeRow from "../swipableComponent";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import GoalForm from "../goal_form";
-import DropDownPicker from "react-native-dropdown-picker";
-import { createGoal, deleteGoal, listGoals, type GoalRecord, updateGoalCompletion } from "@/services/goals";
-import { router } from "expo-router";
+import { createGoal } from "@/services/goals";
 import GoalsList from "../goal_list";
 import MaterialCommunityIcons from "@expo/vector-icons/build/MaterialCommunityIcons";
 
@@ -39,7 +35,10 @@ import MaterialCommunityIcons from "@expo/vector-icons/build/MaterialCommunityIc
     }
 
     type Category = "Food" | "Fitness" | "Mental_Health" | "Social" | "Study" | "Sleep" | "Other";
-    const ICONS: Record<Category, string> = {
+
+    type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+
+    const ICONS: Record<Category, IconName> = {
         Food: "food-fork-drink",
         Fitness: "dumbbell",
         Mental_Health: "brain",

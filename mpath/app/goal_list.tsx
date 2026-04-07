@@ -1,11 +1,8 @@
-import {createContext, use, useCallback, useEffect, useState } from "react";
-import { ScrollView, View, Text, StyleSheet, FlatList, Button, Pressable, Modal, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {useCallback, useEffect, useState } from "react";
+import { View, StyleSheet, FlatList, Pressable, Alert } from "react-native";
 import  SwipeRow from "./swipableComponent";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import GoalForm from "./goal_form";
 import DropDownPicker from "react-native-dropdown-picker";
-import { createGoal, deleteGoal, listGoals, type GoalRecord, updateGoalCompletion } from "@/services/goals";
+import { deleteGoal, listGoals, type GoalRecord, updateGoalCompletion } from "@/services/goals";
 import { router, useFocusEffect } from "expo-router";
 import { addDonation, getProfile } from "@/services/profile";
 import { supabase } from "@/utils/supabase";
