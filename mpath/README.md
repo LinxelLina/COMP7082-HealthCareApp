@@ -28,7 +28,7 @@ Tiny actions, repeated consistently, stop being tiny.
 
 ## Current features
 
-These are the features that appear to be implemented in the current codebase:
+These are the features that are currently implemented in the codebase:
 
 - Goal and habit creation with title, description, category, optional milestone settings, and optional reminder time
 - Local, private data storage using SQLite
@@ -60,7 +60,7 @@ The project is configured as an Expo app in [app.json](./app.json), and the main
 
 ## High-level architecture / data flow
 
-
+NOT SURE WHAT TO PUT HERE YET
 
 ### Local app data
 
@@ -79,6 +79,9 @@ Supabase is used for charity-related features.
 - charity list and charity graph screens fetch charity data from Supabase
 - the charity form inserts new charity rows into Supabase
 - some goal completion and ad-video flows call Supabase RPC functions to increase contribution totals
+
+
+TOO HONEST BELOW?!
 
 Note: Supabase usage exists, but it is not cleanly wrapped in a nice back-end architecture or service layer or anything. Supabase is sometimes called directly. That is less about purposeful design and more about shipping a working demo.
 
