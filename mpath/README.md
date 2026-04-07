@@ -80,7 +80,6 @@ Supabase is used for charity-related features.
 - the charity form inserts new charity rows into Supabase
 - some goal completion and ad-video flows call Supabase RPC functions to increase contribution totals
 
-
 TOO HONEST BELOW?!
 
 Note: Supabase usage exists, but it is not cleanly wrapped in a nice back-end architecture or service layer or anything. Supabase is sometimes called directly. That is less about purposeful design and more about shipping a working demo.
@@ -90,8 +89,6 @@ Note: Supabase usage exists, but it is not cleanly wrapped in a nice back-end ar
 - [app/_layout.tsx](./app/_layout.tsx) sets up the root stack, database initialization, and notification initialization
 - [app/(tabs)/_layout.tsx](./app/(tabs)/_layout.tsx) defines the tab layout
 - most user-facing screens live under [app](./app) and [app/(tabs)](./app/%28tabs%29)
-
-At a high level, the flow is:
 
 1. The app starts and initializes local storage plus notifications.
 2. Users create and manage goals locally.
@@ -149,18 +146,14 @@ to solve networking issues.
 
 npm run lint
 
-
 ## Known limitations / rough edges
 
 - Some charity features depend on a matching Supabase project, tables, and RPC functions already existing
 - Supabase access is handled directly in some screens instead of through a dedicated abstraction layer
 - The app mixes local-only data and remote charity data, so the overall data model is functional but not fully streamlined
 
-
 ## In Conclusion
 
-This project is trying to take a pretty unglamorous idea seriously: that improving your life is less about hacks and more about repeating good, boring decisions.
-
-M-Path has goals, reminders, milestones, 2 databases, charts, charity data, and a mascot you can pet, which is a pretty darn good amount of features. Especially considering we only had 2 team members and limited time!
+M-Path has goals, reminders, milestones, 2 databases, charts, charity data, and a mascot you can pet, which is a pretty darn good amount of features. Especially considering we only had 2 team members and limited time! We had a lot of fun and learned a lot.
 
 Thank you for your interest and time.
