@@ -1,78 +1,20 @@
 import {useRef, useState } from "react";
-import { View, Text, StyleSheet, FlatList, Button, Pressable, Modal, Alert } from "react-native";
+import { View, Text, StyleSheet, Button, Pressable, Modal, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import GoalForm from "../goal_form";
 import { createGoal } from "@/services/goals";
 import GoalsList from "../goal_list";
 import MaterialCommunityIcons from "@expo/vector-icons/build/MaterialCommunityIcons";
+import {Category, ICONS, OPTIONS, CATEGORYNAMES} from '../../types/category'
+import { GoalFormType } from "../../types/goals";
 
-    type Habit = {
-      id: string;
-      goal: string;
-      description: string;
-      category: string;
-      newHabit: boolean;
-      isMilestone: boolean;
-      milestoneType: string;
-      milestoneTarget: number | null;
-      start_date: Date;
-      hasDuration: boolean;
-      duration: Date;
-      isComplete: boolean;
-    };
-
-    type GoalForm = {
-      goal: string;
-      description: string;
-      category: string;
-      newHabit: boolean;
-      hasDuration: boolean;
-      duration: Date;
-      isComplete: boolean;
-      isMilestone: boolean;
-      milestoneType: string;
-      milestoneTarget: number | null;
-    }
-
-    type Category = "Food" | "Fitness" | "Mental_Health" | "Social" | "Study" | "Sleep" | "Other";
-
-    type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
-
-    const ICONS: Record<Category, IconName> = {
-        Food: "food-fork-drink",
-        Fitness: "dumbbell",
-        Mental_Health: "brain",
-        Social: "account-group",
-        Study: "book-alphabet",
-        Sleep: "sleep",
-        Other: "cloud-question",
-    }
-    const OPTIONS: Record<Category, string[]> = {
-        Food: ["Eat breakfast", "Eat lunch", "Eat dinner", "Snack","Drink more water", "Eat more fruits", "Eat more vegetables"],
-        Fitness: ["Go for a walk","Go for a run", "Do yoga", "Lift weights", "Got to the gym", "Go to the pool"],
-        Mental_Health: ["Meditate", "Journal", "Practice gratitude", "Take a break", "Go outside", "Practice mindfulness"],
-        Social: ["Call a friend", "Meet up with a friend", "Go to a social event", "Join a club", "Volunteer", "Attend a community event"],
-        Study: ["Review notes", "Read a book", "Practice problems", "Attend a study group", "Watch educational videos", "Take practice tests"],
-        Sleep: ["Go to bed earlier", "Wake up earlier", "Take a nap", "Create a bedtime routine", "Limit screen time before bed", "Avoid caffeine in the evening"],
-        Other: ["Practice a hobby", "Learn something new", "Organize your space", "Set goals for the week", "Reflect on your day","test","test2","test4"]
-    }
-
-    const CATEGORYNAMES: Record<Category, string> = {
-        Food: "Food",
-        Fitness: "Fitness",
-        Mental_Health: "Mental Health",
-        Social: "Social",
-        Study: "Study",
-        Sleep: "Sleep",
-        Other: "Other"
-    }
-export default function goal_page() {
+  
+export default function GoalPage() {
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [openNewHabitForm, setOpenNewHabitForm] = useState(false);
     const refreshListRef = useRef<() => void>(() => {});
 
     async function addCategoryGoalsToDatabase(category: Category, goal: string) {
-      console.log(category, goal);
       try {
         const savedId = await createGoal({
           title: goal.trim(),
@@ -117,8 +59,7 @@ export default function goal_page() {
                   }}
                   onStartShouldSetResponder={() => true}
                 >
-                  <GoalForm onSubmit={(form:GoalForm) => {
-                    console.log(form);
+                  <GoalForm onSubmit={(form:GoalFormType) => {
                     if (form.newHabit && form.category in OPTIONS) {
                       OPTIONS[form.category as Category].push(form.goal);
                     }
@@ -151,7 +92,6 @@ export default function goal_page() {
                         onPress={async () => {
                           const savedId = await addCategoryGoalsToDatabase(selectedCategory, option);
                           if (!savedId) return;
-                          // setSelectedCategory(null);
                           refreshListRef.current();
                         }}
                     >
@@ -162,8 +102,9 @@ export default function goal_page() {
             </Pressable>
         </Modal>
 
-        <Button title="Add New Habit" onPress={() => {
-          setOpenNewHabitForm(!openNewHabitForm);}}/>
+        <Pressable onPress={() => {setOpenNewHabitForm(!openNewHabitForm);}} style={styles.addButton}>
+          <Text style={styles.addButtonText}>Add New Habit</Text>    
+        </Pressable>
 
         <View style={styles.categoryBar}>
             {Object.keys(OPTIONS).map((category) => (
@@ -183,34 +124,11 @@ export default function goal_page() {
 }
 
 const styles = StyleSheet.create({
-  item: {
-    padding: 16,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: "#ccc",
-    marginHorizontal: 16,
-  },
     container: {
     flex: 1,
     paddingTop:10,
     backgroundColor: "#fff",
     marginBottom: 0,
-  },
-  picker: {
-    marginHorizontal: 16,
-  },
-  categoryList:{
-    flex:1,
-  },
-  item2: {
-    padding: 16,
-    backgroundColor: "#f9f9f9",
-  },
-  separator2: {
-    height: 1,
-    backgroundColor: "#ddd",
-    marginHorizontal: 16,
   },
   categoryBar: {
     height:80,
@@ -248,4 +166,21 @@ const styles = StyleSheet.create({
   option: {
     paddingVertical: 12,
   },
+  addButton:{
+    backgroundColor: "#e8f5e9",
+    borderWidth: 1,
+    borderColor: "#a5d6a7",
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginVertical: 8,
+  },
+  addButtonText:{
+    color: "#2e7d32",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+
 });

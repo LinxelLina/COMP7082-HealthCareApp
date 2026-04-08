@@ -2,42 +2,10 @@
 
 import { openDatabaseAsync, type SQLiteDatabase } from "expo-sqlite";
 import { cancelScheduledReminder } from "@/utils/notifications";
-
+import { GoalRecord, CreateGoalInput } from "@/types/goals";
+import { getRemainingTime, mapGoalRecordToHabit } from "@/utils/goals";
+import { Habit } from "@/types/habit";
 const DB_NAME = "goals.db";
-
-export type GoalRecord = {
-  id: number;
-  title: string;
-  description: string | null;
-  category: string | null;
-  is_habit: number;
-  is_completed: number;
-  is_milestone: number;
-  milestone_type: string | null;
-  milestone_target: number | null;
-  check_in_count: number;
-  duration_date: string | null;
-  reminder_enabled: number;
-  reminder_time: string | null;
-  reminder_notification_id: string | null;
-  created_at: string;
-};
-
-export type CreateGoalInput = {
-  title: string;
-  description?: string | null;
-  category?: string | null;
-  is_habit?: boolean;
-  is_completed?: boolean;
-  is_milestone?: boolean;
-  milestone_type?: string | null;
-  milestone_target?: number | null;
-  check_in_count?: number;
-  duration_date?: string | null;
-  reminder_enabled?: boolean;
-  reminder_time?: string | null;
-  reminder_notification_id?: string | null;
-};
 
 export type UpdateMilestoneInput = {
   is_milestone: boolean;
@@ -289,4 +257,47 @@ export async function deleteGoal(id: number) {
   }
 
   await database.runAsync("DELETE FROM goals WHERE id = ?", id);
+}
+
+export const fetchAndCleanGoals = async (): Promise<Habit []> => {
+    const data = await listGoals();
+    const mappedData = data.map(mapGoalRecordToHabit);
+    //delete goals that have expired and are marked as complete, append remaining time to goals that have expired but are not marked as complete, and append remaining time to goals that have a duration
+    
+    for (const goal of mappedData || []) {
+      if (goal.hasDuration) {
+        const remainingTime = getRemainingTime(goal.duration.toISOString());
+        if(remainingTime === "Expired" && goal.isComplete) {
+          try{
+            const id = Number(goal.id);
+            if(isNaN(id)) continue;
+            await deleteGoal(id);
+          } catch{
+            console.error(`Failed to delete expired goal ${goal.id}`);
+          }
+        }else if (remainingTime === "Expired" && !goal.isComplete) {
+          goal.goal += " (Expired)";
+        }else {
+          goal.goal += ` (${remainingTime} remaining)`;
+        }
+      }
+    }
+      // delete goals a day old that don't have durations
+    const oneDay = 24 * 60 * 60 * 1000;
+    for (const goal of mappedData || []) {
+      if (!goal.hasDuration && goal.isComplete) {
+        const createdAt = new Date(goal.start_date);
+        if (Date.now() - createdAt.getTime() > oneDay){
+          try{
+            const id = Number(goal.id);
+            if(isNaN(id)) continue;
+            await deleteGoal(id);
+          }catch(error){
+            console.error(`Failed to delete old goal ${goal.id}`);
+          }
+        }
+      }  
+    }
+
+  return mappedData;
 }

@@ -64,7 +64,6 @@ export default function charity_list() {
             .from("charity")
             .select("*");
 
-            // console.log(data);
             if (error) {
                 console.error("Error fetching charities:", error);
             } else {
