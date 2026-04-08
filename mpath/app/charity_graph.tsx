@@ -1,57 +1,43 @@
-import { supabase } from "@/utils/supabase";
-import { useEffect, useRef, useState } from "react";
-import { Alert, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, View, StyleSheet, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BarChart } from "react-native-gifted-charts";
-import { JSX } from "react/jsx-runtime";
+import { Charity_Numbers, CharityBarDataPoint } from "@/types/charity";
+import { fetchCharityData } from "@/services/supabase";
 
-    type Charity_Numbers = {
-        name: string,
-        value: number,
-    }
-
-    type MyBarDataPoint = {
-        value: number;
-        label: string;
-        frontColor?: string;
-        topLabelComponent?: () => JSX.Element;
-    };
-
-export default function charity_description(){
+export default function CharityDescription(){
     const [charityList, setCharityList] = useState<Charity_Numbers[]>([]);
 
 
     useEffect(()=>{ 
-        async function fetchCharityData() {
-            const {data, error} = await supabase.from("charity").select("charity_name, contribution_total");
-            if(error){
-                console.error("Error fetching charity data:", error);
-            } else {
-                const mappedData = data?.map((charity: any) => ({
-                    name: charity.charity_name,
-                    value: charity.contribution_total,
-                }));
-            setCharityList(prev => {
-                const isSame =
-                    prev.length === mappedData.length &&
-                    prev.every((item, i) => item.name === mappedData[i].name && item.value === mappedData[i].value);
-                return isSame ? prev : mappedData;
-            });
+        async function getCharityData() {
+            try{
+                const charityData = await fetchCharityData();
+                setCharityList(prev => {
+                    const isSame =
+                        prev.length === charityData.length &&
+                        prev.every((item, i) => item.name === charityData[i].name && item.value === charityData[i].value);
+                    return isSame ? prev : charityData;
+                });
+            }catch (error){
+                Alert.alert("Error","Could not load charity graph data. Please try again.")
             }
         }
-        fetchCharityData();
+
+        getCharityData();
     },[])
 
-    const barData: MyBarDataPoint[] = charityList.map(item =>({
+    const barData: CharityBarDataPoint[] = charityList.map(item =>({
         value: item.value,
         label: item.name,
         frontColor:'#177AD5'
     }));
 
     return(
-       <SafeAreaView style={{flex:1}}>
-        <View style={{flex:1}}>
+       <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
             <BarChart
+                adjustToWidth
                 barWidth={22}
                 noOfSections={3}
                 barBorderRadius={4}
@@ -59,7 +45,8 @@ export default function charity_description(){
                 data={barData}
                 yAxisThickness={0}
                 xAxisThickness={0}
-                onPress={(dataPoint:any)=>{
+                height={400}
+                onPress={(dataPoint:CharityBarDataPoint)=>{
                         Alert.alert("Current Total", `${dataPoint.value} for ${dataPoint.label}`);
                     }
                 }
@@ -69,3 +56,12 @@ export default function charity_description(){
         </SafeAreaView>
     )
 }
+
+const styles = StyleSheet.create({
+    container:{
+        flex:1,
+    },
+    content:{
+        flex:1,
+    }
+});

@@ -1,30 +1,13 @@
 import { createGoal, updateGoalReminder } from "@/services/goals";
 import { scheduleDailyGoalReminder } from "@/utils/notifications";
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Picker } from "@react-native-picker/picker";
 import { Checkbox } from 'expo-checkbox';
 import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import {ScrollView} from "react-native-gesture-handler";
-
-type GoalFormValues = {
-  goal: string;
-  description: string;
-  category: string;
-  newHabit: boolean;
-  hasDuration: boolean;
-  duration: Date;
-  isComplete: boolean;
-  isMilestone: boolean;
-  milestoneType: "" | "streak" | "count";
-  milestoneTarget: number | null;
-  reminderEnabled: boolean;
-  reminderTime: Date;
-};
-
-type GoalFormProps = {
-  onSubmit?: (form: GoalFormValues) => void;
-};
+import { GoalFormValues, GoalFormProps } from "../types/goals";
+import { formatReminderLabel, formatReminderTime, formatTargetDateLabel } from "@/utils/formatting";
 
 export default function GoalForm({ onSubmit = () => {} }: GoalFormProps) {
   const [form, setForm] = useState<GoalFormValues>({
@@ -117,7 +100,7 @@ export default function GoalForm({ onSubmit = () => {} }: GoalFormProps) {
     setShowDatePicker(hasDuration);
   };
 
-  const onChange = (event: any, selectedDate: any) => {
+  const onChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     if (event?.type !== "set" || !selectedDate) {
       return;
     }
@@ -126,34 +109,12 @@ export default function GoalForm({ onSubmit = () => {} }: GoalFormProps) {
     updateForm({ duration: selectedDate });
   };
 
-  const onReminderChange = (event: any, selectedTime: any) => {
+  const onReminderChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     if (event?.type === "set" && selectedTime) {
       updateForm({ reminderTime: selectedTime });
     }
 
     setShowReminderPicker(false);
-  };
-
-  const formatReminderTime = (value: Date) => {
-    const hours = value.getHours().toString().padStart(2, "0");
-    const minutes = value.getMinutes().toString().padStart(2, "0");
-    return `${hours}:${minutes}`;
-  };
-
-  const formatReminderLabel = (value: Date) =>
-    value.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-
-  const formatTargetDateLabel = (value: Date) => {
-    const dateLabel = value.toLocaleDateString([], {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-    const timeLabel = value.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${dateLabel} at ${timeLabel}`;
   };
 
   const milestoneTargetPlaceholder =
@@ -195,6 +156,13 @@ export default function GoalForm({ onSubmit = () => {} }: GoalFormProps) {
       return {
         title: "Choose a tracking style",
         message: "Pick how you want to track this milestone.",
+      };
+    }
+
+    if (form.isMilestone && form.milestoneType && form.milestoneTarget === null) {
+      return {
+        title: "Missing target",
+        message: "Please enter a target number for your milestone.",
       };
     }
 
@@ -264,7 +232,6 @@ export default function GoalForm({ onSubmit = () => {} }: GoalFormProps) {
   }
 
   return (
-    // <View style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
@@ -386,14 +353,14 @@ export default function GoalForm({ onSubmit = () => {} }: GoalFormProps) {
                     <View style={styles.inlinePanel}>
                       <Text style={styles.inlineTitle}>Target date and time</Text>
                       <DateTimePicker
-                        testID="dateTimePicker"
+                        testID="datePicker"
                         value={date}
                         mode={"date"}
                         is24Hour={true}
                         onChange={onChange}
                       />
                       <DateTimePicker
-                        testID="dateTimePicker"
+                        testID="timePicker"
                         value={date}
                         mode={"time"}
                         is24Hour={true}
@@ -428,15 +395,10 @@ export default function GoalForm({ onSubmit = () => {} }: GoalFormProps) {
           <Text style={styles.primaryButtonText}>Save Goal</Text>
         </Pressable>
       </ScrollView>
-    // </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f4f6f8",
-  },
   content: {
     padding: 16,
     paddingBottom: 24,

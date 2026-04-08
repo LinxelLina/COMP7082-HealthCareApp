@@ -1,11 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import {scheduleOnRN} from "react-native-worklets";
 
 type Habit = {
   id: string;
@@ -33,7 +33,7 @@ export default function SwipeRow({
     })
     .onEnd(() => {
       if (translateX.value < -120) {
-        runOnJS(onDelete)(item.id);
+        scheduleOnRN(onDelete,item.id);
         translateX.value = 0;
       } else {
         translateX.value = withSpring(0);
