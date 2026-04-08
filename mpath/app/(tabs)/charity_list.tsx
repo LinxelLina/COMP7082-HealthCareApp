@@ -1,41 +1,22 @@
-import {use, useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, Button, Pressable, Modal, Alert, Linking } from "react-native";
+import {useEffect, useState } from "react";
+import { View, Text, StyleSheet, FlatList, Pressable, Modal, Alert} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ScrollView } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
-import { supabase } from "@/utils/supabase";
 import * as WebBrowser from "expo-web-browser";
 import { router } from "expo-router";
+import { Charity_Category, Charity, CHARITYCATEGORYNAMES } from "@/types/charity";
+import { fetchCharities } from "@/services/supabase";
+import {ScrollView} from "react-native-gesture-handler";
 
-type Charity_Category = "Education" | "Environment" | "Animal_Welfare" | "Disaster_Relief" | "Medical" |"Other";
-
-type Charity = {
-    id: string;
-    name: string;
-    description: string;
-    category: Charity_Category;
-    website: string;
-    contactEmail: string;
-    funds: number;
-};
-
-  const CHARITYCATEGORYNAMES: Record<Charity_Category, string> = {
-      Education: "Education",
-      Environment: "Environment",
-      Animal_Welfare: "Animal Welfare",
-      Disaster_Relief: "Disaster Relief",
-      Medical: "Medical",
-      Other: "Other"
-  }
-
-export default function charity_list() {
+export default function CharityList() {
     const [charityList, setCharityList] = useState<Charity[]>([]);
     const [visibleList, setVisibleList] = useState<Charity[]>([]);
     const [isOpen, setOpen] = useState(false);
-    const [value, setValue] = useState(null);
+    const [value, setValue] = useState<string | null>(null);
     const [items, setItems] = useState([
       {label: 'All', value: 'All'},
       {label: 'Education', value: 'Education'},
+      {label: 'Medical', value: 'Medical'},
       {label: 'Environment', value: 'Environment'},
       {label: 'Animal Welfare', value: 'Animal_Welfare'},
       {label: 'Disaster Relief', value: 'Disaster_Relief'},
@@ -45,10 +26,7 @@ export default function charity_list() {
     const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
     const [selected, setSelected] = useState<Charity | null>(null);
 
-    async function sleep(timeout: number) {
-      return new Promise(resolve => setTimeout(resolve, timeout))
-    }
-    async function openLink(this: any, url: string) {
+    async function openLink(url: string) {
       try {
         const formattedUrl = url.startsWith("http") ? url : `https://${url}`;
         await WebBrowser.openBrowserAsync(formattedUrl);
@@ -59,51 +37,44 @@ export default function charity_list() {
     }
 
     useEffect(() => {
-        async function fetchCharities() {
-            const { data, error } = await supabase
-            .from("charity")
-            .select("*");
-
-            if (error) {
-                console.error("Error fetching charities:", error);
-            } else {
-                const mappedData = data?.map((charity: any) => ({
-                    id: charity.id.toString(),
-                    name: charity.charity_name,
-                    category: charity.charity_type ?? "Other",
-                    description: charity.description,
-                    website: charity.website,
-                    contactEmail: charity.contact_email,
-                    funds: charity.contribution_total,
-                }));
-                // console.log(mappedData);
-                setCharityList(mappedData);
-            }
+        async function getCharities() {
+          try{
+            const charities = await fetchCharities()
+            setCharityList(charities);
+          }catch (error: any){
+            Alert.alert("Error","Could not load charities. Please try again.");
+          }
         }
 
-        fetchCharities();
+        getCharities();
     }, []);
 
-    const filterList = value === "All" || value === null ? charityList : charityList.filter(item => item.category === value);
+    // const filterList = value === "All" || value === null ? charityList : charityList.filter(item => item.category === value);
+
+    // useEffect(() => {
+    //   if(value === "All" || value === null) {
+    //     setVisibleList(charityList);
+    //   } else {
+    //     setVisibleList(filterList);
+    //   }
+    // }, [value]);
+
+    // useEffect(() => {
+    //   setVisibleList(charityList);
+    // }, [charityList]);
 
     useEffect(() => {
-      if(value === "All" || value === null) {
-        setVisibleList(charityList);
-      } else {
-        setVisibleList(filterList);
+      let filtered = charityList;
+      if (value && value !== "All") {
+        filtered = charityList.filter(item => item.category === value);
       }
-    }, [value]);
-
-    useEffect(() => {
-      setVisibleList(charityList);
-    }, [charityList]);
+      setVisibleList(filtered);
+    }, [charityList, value]);
 
     function openForm(id : string) {
-        // console.log("Opening form for charity ID:", id);
         const selectedCharity = charityList.find(item => item.id === id);
         setSelected(selectedCharity ?? null);
         setIsDescriptionOpen(true);
-        // console.log(selected);
     }
 
     return(
@@ -126,18 +97,18 @@ export default function charity_list() {
             data={visibleList}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-            <Pressable onLongPress={() => {openForm(item.id)}} style={styles.charityItem}>
-              <View style={styles.rowContent}>
-              <View style={styles.categoryColumn}>
-              <View style={styles.categoryPill}>
-                <Text style={styles.categoryText}>{CHARITYCATEGORYNAMES[item.category as Charity_Category]}</Text>
-                </View>
-                </View>
-                <Text style={styles.charityText}>{item.name}</Text>
-                </View>
+              <Pressable onLongPress={() => {openForm(item.id)}} style={styles.charityItem}>
+                <View style={styles.rowContent}>
+                <View style={styles.categoryColumn}>
+                <View style={styles.categoryPill}>
+                  <Text style={styles.categoryText}>{CHARITYCATEGORYNAMES[item.category as Charity_Category]}</Text>
+                  </View>
+                  </View>
+                  <Text style={styles.charityText}>{item.name}</Text>
+                  </View>
 
 
-           </Pressable>
+              </Pressable>
             )}         
             ItemSeparatorComponent={() => <View style={styles.separator2} />}   contentInsetAdjustmentBehavior="never"
             automaticallyAdjustContentInsets={false}
@@ -202,59 +173,28 @@ export default function charity_list() {
         </Modal>
 
         <Pressable onPress={() => router.push("../charity_graph")}
-          style={{padding: 16, backgroundColor: "#007AFF", borderRadius: 8, alignItems: "center", margin: 16}}>
-          <Text>Go to Charity Graph</Text>
+          style={styles.charityGraphButton}>
+          <Text style={styles.charityGraphText}>Go to Charity Graph</Text>
         </Pressable>
 
         <Pressable onPress={() => router.push("../charity_form")}
-          style={{padding: 16, backgroundColor: "#176e4e", borderRadius: 8, alignItems: "center", margin: 16}}>
-          <Text>Go to Charity Form</Text>
+          style={styles.charityFormButton}>
+          <Text style={styles.charityFormText}>Go to Charity Form</Text>
         </Pressable>
     </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-  item: {
-    padding: 16,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: "#ccc",
-    marginHorizontal: 16,
-  },
-    container: {
+  container: {
     flex: 1,
     backgroundColor: "#fff",
   },
-  picker: {
-    marginHorizontal: 16,
-  },
-  categoryList:{
-    flex:1,
-  },
-  item2: {
-    padding: 16,
-    backgroundColor: "#f9f9f9",
-  },
   separator2: {
-    // height: 1,
     backgroundColor: "#ddd",
     marginHorizontal: 16,
   },
-  categoryBar: {
-    height:80,
-    flexDirection: "row",
-    borderTopWidth: 1,
-    borderColor: "#ddd",
-    backgroundColor: "white",
-  },
-    categoryButton: {
-    flex: 1,
-    padding: 16,
-    alignItems: "center",
-  },
-    modalOverlay: {
+  modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",
     backgroundColor: "rgba(0,0,0,0.3)",
@@ -270,9 +210,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 12,
   },
-  option: {
-    paddingVertical: 12,
-  },
   charityItem: {
     width: '100%',
     borderWidth: 1,
@@ -287,42 +224,73 @@ const styles = StyleSheet.create({
     fontWeight: '600'
   },
   charityModal: {
-  width: "90%",
-  height: "50%",
-  backgroundColor: "white",
-  padding: 20,
-  borderRadius: 16,
-  alignSelf: "center",
-  marginTop: "40%",
-},
-
-modalLabel: {
-  marginTop: 10,
-  fontWeight: "600",
-  color: "#555",
-  fontSize:18,
-},
+    width: "90%",
+    height: "50%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 16,
+    alignSelf: "center",
+    marginTop: "40%",
+  },
+  modalLabel: {
+    marginTop: 10,
+    fontWeight: "600",
+    color: "#555",
+    fontSize:18,
+  },
   categoryText: {
     color: "#2e7d32",
     fontSize: 12,
     fontWeight: "700",
   },
-   categoryPill: {
+  categoryPill: {
     backgroundColor: "#eef6ef",
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 3,
     alignSelf: "flex-start",
   },
-    categoryColumn: {
+  categoryColumn: {
     width: 100,
     marginRight: 10,
   },
-    rowContent: {
+  rowContent: {
     flexDirection: "row",
     alignItems: "center",
   },
   content:{
     paddingHorizontal: 8,
-  }
+  },
+  charityGraphButton:{
+    backgroundColor: "#e8f0fe",
+    borderWidth: 1,
+    borderColor: "#a8c0f8",
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginVertical: 8,
+  },
+  charityGraphText:{
+    color: "#1a56db",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  charityFormButton:{
+    backgroundColor: "#fef3e8",
+    borderWidth: 1,
+    borderColor: "#f8c8a8",
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginVertical: 8,
+  },
+  charityFormText: {
+    color: "#b45309",
+    fontWeight: "600",
+    fontSize: 16,
+  },
 });
