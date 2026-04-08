@@ -8,6 +8,7 @@ jest.mock("@/services/profile", () => ({
   getProfile: jest.fn(),
 }));
 
+// Fake object designed to satisfy the type system and allow testing of notification scheduling logic without relying on actual device permissions or Expo's notification implementation.
 jest.mock("expo-notifications", () => ({
   AndroidImportance: {
     MAX: "max",
@@ -71,5 +72,56 @@ describe("scheduleDailyGoalReminder", () => {
     expect(result).toBeNull();
     expect(mockedNotifications.getPermissionsAsync).not.toHaveBeenCalled();
     expect(mockedNotifications.scheduleNotificationAsync).not.toHaveBeenCalled();
+  });
+
+  it("does not request permission if it's already granted", async () => {
+    mockedGetProfile.mockResolvedValue({
+      current_charity: null,
+      total_donations: 0,
+      disable_notifications: 0,
+      no_ads: 0,
+    });
+    mockedNotifications.getPermissionsAsync.mockResolvedValue({ status: "granted" } as any);
+    mockedNotifications.scheduleNotificationAsync.mockResolvedValue("giveusanA" as any);
+
+    await scheduleDailyGoalReminder("Drink Water", "09:30");
+
+    expect(mockedNotifications.requestPermissionsAsync).not.toHaveBeenCalled();
+    expect(mockedNotifications.scheduleNotificationAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns null when permission is denied", async () => {
+    mockedGetProfile.mockResolvedValue({
+      current_charity: null,
+      total_donations: 0,
+      disable_notifications: 0,
+      no_ads: 0,
+    });
+    mockedNotifications.getPermissionsAsync.mockResolvedValue({ status: "denied" } as any);
+    mockedNotifications.requestPermissionsAsync.mockResolvedValue({ status: "denied" } as any);
+
+    const result = await scheduleDailyGoalReminder("Drink Water", "09:30");
+
+    expect(result).toBeNull();
+    expect(mockedNotifications.requestPermissionsAsync).toHaveBeenCalledTimes(1);
+    expect(mockedNotifications.scheduleNotificationAsync).not.toHaveBeenCalled();
+  });
+
+  it("schedules after prompting and receiving perms", async () => {
+    mockedGetProfile.mockResolvedValue({
+      current_charity: null,
+      total_donations: 0,
+      disable_notifications: 0,
+      no_ads: 0,
+    });
+    mockedNotifications.getPermissionsAsync.mockResolvedValue({ status: "undetermined" } as any);
+    mockedNotifications.requestPermissionsAsync.mockResolvedValue({ status: "granted" } as any);
+    mockedNotifications.scheduleNotificationAsync.mockResolvedValue("best-proj-ever" as any);
+
+    const result = await scheduleDailyGoalReminder("Drink Water", "09:30");
+
+    expect(result).toBe("best-proj-ever");
+    expect(mockedNotifications.requestPermissionsAsync).toHaveBeenCalledTimes(1);
+    expect(mockedNotifications.scheduleNotificationAsync).toHaveBeenCalledTimes(1);
   });
 });
