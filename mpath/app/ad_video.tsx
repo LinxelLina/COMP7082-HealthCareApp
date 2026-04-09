@@ -1,9 +1,8 @@
-import { addDonation } from "@/services/profile";
 import {VideoView, useVideoPlayer} from "expo-video";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback } from "react";
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { updateCharityPoint } from "@/services/supabase";
+import { updateCharityPoints } from "@/services/supabase";
 
 export default function AdVideoScreen() {
 
@@ -26,8 +25,7 @@ export default function AdVideoScreen() {
 
         async function updatePoints(){
           try{
-            await updateCharityPoint(charity_name, 10); //remote database
-            await addDonation(10); //local database
+            await updateCharityPoints(charity_name, 10); //remote database and local
           }catch(error){
             Alert.alert("Error", "There was an issue updating points. Please try again.");
           }          
@@ -37,7 +35,7 @@ export default function AdVideoScreen() {
         Alert.alert("Success","Successfully watched the ad and earned points. Returning to the previous screen.", 
           [{text: "OK", onPress: () => router.back() }]);
 
-      }, 5000); // 30000ms = 30 seconds
+      }, 30000); // 30000ms = 30 seconds
 
       return () => clearTimeout(timer); // cleanup if user leaves page early
     },[])

@@ -3,7 +3,7 @@ import { Alert } from "react-native";
 import { addDonation } from "./profile";
 import { Charity, Charity_Numbers, CharityFormFields, CharityIdName } from "@/types/charity";
 
-export async function updateCharityPoint(current_charity: string, contribution: number){
+export async function updateCharityPoints(current_charity: string, contribution: number){
     const {error} = await supabase.rpc("increment_contribution_by_name", { 
         charity_name: current_charity,
         contribution: contribution  // ← change contribution here
@@ -11,8 +11,8 @@ export async function updateCharityPoint(current_charity: string, contribution: 
     if (error) {
         Alert.alert("Error", "There was an issue updating the charity points. Please try again.");
     }
-
-    await addDonation(1); //local database
+    
+    await addDonation(contribution); //local database
 };
 
 export async function fetchCharities(): Promise<Charity[]> {
