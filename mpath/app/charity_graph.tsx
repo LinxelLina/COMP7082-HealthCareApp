@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Alert, View, StyleSheet, Dimensions } from "react-native";
+import { Alert, View, StyleSheet} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BarChart } from "react-native-gifted-charts";
 import { Charity_Numbers, CharityBarDataPoint } from "@/types/charity";

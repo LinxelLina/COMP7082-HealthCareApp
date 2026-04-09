@@ -1,5 +1,5 @@
 import {useRef, useState } from "react";
-import { View, Text, StyleSheet, Button, Pressable, Modal, Alert } from "react-native";
+import { View, Text, StyleSheet, Pressable, Modal, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import GoalForm from "../goal_form";
 import { createGoal } from "@/services/goals";

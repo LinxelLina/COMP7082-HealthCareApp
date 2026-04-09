@@ -49,20 +49,6 @@ export default function CharityList() {
         getCharities();
     }, []);
 
-    // const filterList = value === "All" || value === null ? charityList : charityList.filter(item => item.category === value);
-
-    // useEffect(() => {
-    //   if(value === "All" || value === null) {
-    //     setVisibleList(charityList);
-    //   } else {
-    //     setVisibleList(filterList);
-    //   }
-    // }, [value]);
-
-    // useEffect(() => {
-    //   setVisibleList(charityList);
-    // }, [charityList]);
-
     useEffect(() => {
       let filtered = charityList;
       if (value && value !== "All") {

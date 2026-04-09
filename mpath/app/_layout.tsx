@@ -3,7 +3,6 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { initGoalsDatabase } from '@/services/goals';
 import { initializeNotifications } from '@/utils/notifications';
@@ -31,7 +30,6 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
       <Stack screenOptions={{headerBackTitle: "Back"}}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="charity_form" options={{title: "Charity Form"}} />
         <Stack.Screen name="charity_graph" options={{title: "Charity Graph"}}/>
         <Stack.Screen name="goal_form" options={{title: "Goal Form"}} />

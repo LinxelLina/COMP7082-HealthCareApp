@@ -6,19 +6,13 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import {scheduleOnRN} from "react-native-worklets";
-
-type Habit = {
-  id: string;
-  goal: string;
-  category: string;
-  isComplete: boolean;
-};
+import { BasicHabit } from "@/types/habit";
 
 export default function SwipeRow({
   item,
   onDelete,
 }: {
-  item: Habit;
+  item: BasicHabit;
   onDelete: (id: string) => void;
 }) {
   const translateX = useSharedValue(0);

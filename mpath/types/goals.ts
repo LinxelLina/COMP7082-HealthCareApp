@@ -27,6 +27,19 @@ export type GoalFormValues = {
   reminderTime: Date;
 };
 
+export type GoalDetailParams = {
+  goal_id?: string;
+  title?: string;
+  category?: string;
+  description?: string;
+  is_habit?: string;
+  is_completed?: string;
+  is_milestone?: string;
+  milestone_type?: string;
+  milestone_target?: string;
+  duration_date?: string;
+};
+
 export type GoalFormProps = {
   onSubmit?: (form: GoalFormValues) => void;
 };

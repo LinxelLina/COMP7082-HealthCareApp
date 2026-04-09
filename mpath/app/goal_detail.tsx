@@ -13,74 +13,13 @@ import { useCallback, useEffect, useState } from "react";
 import { Alert, Button, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { GoalDetailParams } from "@/types/goals";
+import { normalizeGoalTitle, getSavedDurationSummary, parseMilestoneTarget } from "@/utils/formatting";
 
 const HYDRATION_DEMO_GOAL_TITLE = "drink water daily";
 const HYDRATION_DEMO_NOTIFICATION_TITLE = "Hydration milestone complete";
 const HYDRATION_DEMO_NOTIFICATION_BODY =
   "Your memory, cognitive performance, and energy levels can be measurably improved because you’re staying hydrated.";
-
-type GoalDetailParams = {
-  goal_id?: string;
-  title?: string;
-  category?: string;
-  description?: string;
-  is_habit?: string;
-  is_completed?: string;
-  is_milestone?: string;
-  milestone_type?: string;
-  milestone_target?: string;
-  duration_date?: string;
-};
-
-function normalizeGoalTitle(value: string | string[] | undefined) {
-  const title = Array.isArray(value) ? value[0] : value;
-
-  if (!title) {
-    return "";
-  }
-
-  return title.trim().replace(/\s+/g, " ").toLowerCase();
-}
-
-function getSavedDurationSummary(durationDate?: string) {
-  if (!durationDate?.trim()) {
-    return {
-      durationText: "",
-      targetDateLabel: "",
-    };
-  }
-
-  const endDate = new Date(durationDate);
-  const diff = endDate.getTime() - Date.now();
-  const oneDay = 24 * 60 * 60 * 1000;
-
-  if (Number.isNaN(endDate.getTime())) {
-    return {
-      durationText: "",
-      targetDateLabel: "",
-    };
-  }
-
-  const targetDateLabel = endDate.toLocaleDateString([], {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
-  const durationText =
-    diff < 0
-      ? `Overdue by ${(Math.abs(diff) / oneDay).toFixed(1)} days`
-      : `${(diff / oneDay).toFixed(1)} days left`;
-
-  return {
-    durationText,
-    targetDateLabel,
-  };
-}
-
-function parseMilestoneTarget(value: string) {
-  return value.trim() === "" ? null : parseInt(value, 10);
-}
 
 export default function GoalDetailScreen() {
   const params = useLocalSearchParams<GoalDetailParams>();

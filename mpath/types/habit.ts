@@ -12,3 +12,10 @@ export type Habit = {
       duration: Date;
       isComplete: boolean;
     };
+
+export type BasicHabit = {
+  id: string;
+  goal: string;
+  category: string;
+  isComplete: boolean;
+};
