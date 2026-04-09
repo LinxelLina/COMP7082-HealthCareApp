@@ -44,8 +44,8 @@ export default function AdVideoScreen() {
     <View style={styles.container}>
       <Video
         style={styles.video}
-        // Placebholder mp4 url below, errors if site is down, try another one, something like https://placeholdervideo.dev/1920x1080 doesn't move but works
-        source={{ uri: "https://samplelib.com/lib/preview/mp4/sample-5s.mp4" }} 
+        // Placebholder url below sometimes errors if site is down
+        source={{ uri: "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8" }} 
         useNativeControls
         resizeMode={ResizeMode.COVER}
         isLooping
