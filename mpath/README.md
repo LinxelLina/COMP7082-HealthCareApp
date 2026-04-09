@@ -180,6 +180,7 @@ npm test -- --runTestsByPath utils/week.test.ts
 npm test -- --runTestsByPath utils/notifications.test.ts
 npm test -- --runTestsByPath utils/goals.test.ts
 npm test -- --runTestsByPath services/profile.test.ts
+npm test -- --runTestsByPath services/supabase.test.ts
 ```
 
 ## Validation

@@ -1,7 +1,7 @@
 import { addDonation } from "./profile";
 import { updateCharityPoint } from "./supabase";
 
-// Tests that if the update to Supabase fails, the local donation is not added
+// Tests coordinating local db if SUpabase fails
 
 const mockRpc = jest.fn();
 
@@ -39,5 +39,19 @@ describe("updateCharityPoint", () => {
       contribution: 1,
     });
     expect(mockedAddDonation).not.toHaveBeenCalled();
+  });
+
+  it("adds a local donation when the Supabase update succeeds", async () => {
+    mockRpc.mockResolvedValue({
+      error: null,
+    });
+
+    await updateCharityPoint("Test Charity");
+
+    expect(mockRpc).toHaveBeenCalledWith("increment_contribution_by_name", {
+      charity_name: "Test Charity",
+      contribution: 1,
+    });
+    expect(mockedAddDonation).toHaveBeenCalledWith(1);
   });
 });
