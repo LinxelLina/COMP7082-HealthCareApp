@@ -23,12 +23,21 @@ describe("updateNoAds", () => {
     mockDatabase.runAsync.mockResolvedValue(undefined);
   });
 
-  it("stores the no-ads choice in the local profile database", async () => {
+  it("stores the no-ads choice as enabled in the local profile database", async () => {
     await updateNoAds(true);
 
     expect(mockDatabase.runAsync).toHaveBeenCalledWith(
       "UPDATE profile SET no_ads = ?",
       1
+    );
+  });
+
+  it("stores the no-ads choice as disabled in the local profile database", async () => {
+    await updateNoAds(false);
+
+    expect(mockDatabase.runAsync).toHaveBeenCalledWith(
+      "UPDATE profile SET no_ads = ?",
+      0
     );
   });
 });

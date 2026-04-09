@@ -1,6 +1,6 @@
 # M-Path
 
-## Thesis
+## The idea
 
 Modern life wants everything instantly.
 
@@ -58,10 +58,6 @@ These are the features that are currently implemented in the codebase:
 
 The project is configured as an Expo app in [app.json](./app.json), and the main scripts are in [package.json](./package.json).
 
-## High-level architecture / data flow
-
-NOT SURE WHAT TO PUT HERE YET
-
 ### Local app data
 
 Goals and profile/settings data are stored privately and locally on the device using SQLite.
@@ -79,10 +75,6 @@ Supabase is used for charity-related features.
 - charity list and charity graph screens fetch charity data from Supabase
 - the charity form inserts new charity rows into Supabase
 - some goal completion and ad-video flows call Supabase RPC functions to increase contribution totals
-
-TOO HONEST BELOW?!
-
-Note: Supabase usage exists, but it is not cleanly wrapped in a nice back-end architecture or service layer or anything. Supabase is sometimes called directly. That is less about purposeful design and more about shipping a working demo.
 
 ### Navigation and UI flow
 
@@ -181,6 +173,7 @@ npm test -- --runTestsByPath utils/notifications.test.ts
 npm test -- --runTestsByPath utils/goals.test.ts
 npm test -- --runTestsByPath services/profile.test.ts
 npm test -- --runTestsByPath services/supabase.test.ts
+npm test -- --runTestsByPath services/milestones.test.ts
 ```
 
 ## Validation
@@ -194,13 +187,6 @@ npm test -- --runTestsByPath services/supabase.test.ts
 - The pipeline automatically installs dependencies, runs lint, and runs tests.
 - Its purpose is to catch breaks early and improve reliability by validating code automatically before and / or after integration.
 - The project prioritised CI over full CD because the repo is still in the prototyping stage. The most meaningful automation at this stage is validating installation, code quality, and test results on each change
-
-## Known limitations
-
-- Some charity features depend on a matching Supabase project, tables, and RPC functions already existing
-- Supabase access is handled directly in some screens instead of through a dedicated abstraction layer
-- The app mixes local-only data and remote charity data, so the overall data model is functional but not fully streamlined
-- Deprecations for expo notifications and video were not yet replaced
 
 ## In Conclusion
 
