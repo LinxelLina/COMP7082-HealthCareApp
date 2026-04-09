@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { View, Text, Pressable, ScrollView, StyleSheet } from "react-native";
+import React, {useMemo, useState } from "react";
+import { View, Text, Pressable, ScrollView, StyleSheet, Alert } from "react-native";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useFocusEffect } from "expo-router";
@@ -9,7 +9,8 @@ import {
   addWeeks,
   formatWeekRange,
 } from "@/utils/week";
-import { listGoals } from "@/services/goals";
+import {MilestoneGoal} from "@/types/milestones"
+import { getMilestoneProgress, getMilestoneSubtext, getRemainingHoursLabel, getProgressBarColor, isCompletedMilestone, getMilestoneValue, getProgressLabel, getEmptyProgressText, fetchMilestoneGoals,  } from "@/services/milestones";
 
 /* ---------- UI helpers ---------- */
 function Button({
@@ -113,140 +114,6 @@ function Row({
   );
 }
 
-/* ---------- screen ---------- */
-type MilestoneGoal = {
-  goal_id: string;
-  title: string;
-  milestone_type: string | null;
-  milestone_target: number | null;
-  check_in_count: number;
-  duration_date: string | null;
-  created_at: string | null;
-};
-
-function getDateProgress(goal: MilestoneGoal): number | null {
-  if (!goal.duration_date) return null;
-
-  const nowMs = Date.now();
-  const targetMs = new Date(goal.duration_date).getTime();
-  const startMs = goal.created_at ? new Date(goal.created_at).getTime() : NaN;
-
-  if (Number.isNaN(targetMs)) return null;
-
-  // Fallback when start date is missing/invalid.
-  if (Number.isNaN(startMs) || targetMs <= startMs) {
-    return nowMs >= targetMs ? 100 : 0;
-  }
-
-  const rawProgress = ((nowMs - startMs) / (targetMs - startMs)) * 100;
-  return Math.max(0, Math.min(100, rawProgress));
-}
-
-function getCheckInProgress(goal: MilestoneGoal): number | null {
-  if (goal.milestone_type !== "count") return null;
-  if (goal.milestone_target == null || goal.milestone_target <= 0) return null;
-
-  const progress = (goal.check_in_count / goal.milestone_target) * 100;
-  return Math.max(0, Math.min(100, progress));
-}
-
-function getMilestoneProgress(goal: MilestoneGoal): number | null {
-  if (goal.milestone_type === "count") {
-    return getCheckInProgress(goal);
-  }
-
-  return getDateProgress(goal);
-}
-
-function formatTargetDate(value: string): string {
-  const targetDate = new Date(value);
-
-  if (Number.isNaN(targetDate.getTime())) {
-    return "No target date";
-  }
-
-  return targetDate.toLocaleDateString([], {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function getMilestoneSubtext(goal: MilestoneGoal): string | undefined {
-  if (goal.milestone_type === "count") {
-    if (goal.milestone_target != null) {
-      return `${goal.check_in_count} of ${goal.milestone_target} check-ins`;
-    }
-
-    return "Check-in goal";
-  }
-
-  if (goal.duration_date) {
-    return `Target date: ${formatTargetDate(goal.duration_date)}`;
-  }
-
-  if (goal.milestone_type === "streak") {
-    return "Target date goal";
-  }
-
-  return undefined;
-}
-
-function getRemainingHoursLabel(goal: MilestoneGoal): string | null {
-  if (goal.milestone_type === "count") {
-    if (goal.milestone_target == null) return null;
-    return `${goal.check_in_count} of ${goal.milestone_target}`;
-  }
-
-  if (!goal.duration_date) return null;
-
-  const targetMs = new Date(goal.duration_date).getTime();
-  if (Number.isNaN(targetMs)) return null;
-
-  const hoursLeft = Math.ceil((targetMs - Date.now()) / (1000 * 60 * 60));
-  if (hoursLeft <= 0) return "overdue";
-  return `${hoursLeft}h left`;
-}
-
-function getProgressLabel(goal: MilestoneGoal): string {
-  if (goal.milestone_type === "count") {
-    return "Check-in progress";
-  }
-
-  return "Target date progress";
-}
-
-function getProgressBarColor(progressPercent: number): string {
-  if (progressPercent >= 100) return "#0f766e";
-  if (progressPercent >= 70) return "#2e7d32";
-  if (progressPercent >= 35) return "#ca8a04";
-  return "#d97706";
-}
-
-function getMilestoneValue(goal: MilestoneGoal): string {
-  if (goal.milestone_type === "count") {
-    if (goal.milestone_target != null) {
-      return `${goal.milestone_target} check-ins`;
-    }
-
-    return "Check-ins";
-  }
-
-  return goal.duration_date ? "Target date" : "-";
-}
-
-function getEmptyProgressText(goal: MilestoneGoal): string {
-  if (goal.milestone_type === "count") {
-    return "Add a check-in target to track progress.";
-  }
-
-  return "Add a target date to track progress.";
-}
-
-function isCompletedMilestone(progressPercent: number | null): boolean {
-  return progressPercent !== null && progressPercent >= 100;
-}
-
 export default function SummaryScreen() {
   const insets = useSafeAreaInsets();
   const scheme = useColorScheme();
@@ -264,29 +131,14 @@ export default function SummaryScreen() {
 
   const fetchMilestones = async () => {
     try {
-      const goals = await listGoals();
-      const localMilestones = goals
-        .filter((goal) => !!goal.is_milestone)
-        .map((goal) => ({
-          goal_id: String(goal.id),
-          title: goal.title,
-          milestone_type: goal.milestone_type,
-          milestone_target: goal.milestone_target,
-          check_in_count: goal.check_in_count ?? 0,
-          duration_date: goal.duration_date,
-          created_at: goal.created_at,
-        }));
-
-      setMilestones(localMilestones);
+      const milestoneGoals = await fetchMilestoneGoals();
+      setMilestones(milestoneGoals);
     } catch (error) {
       console.error("Error fetching milestones:", error);
       setMilestones([]);
+      Alert.alert("Error", "Could not load milestones. Please try again.");
     }
   };
-
-  useEffect(() => {
-    fetchMilestones();
-  }, []);
 
   useFocusEffect(
     React.useCallback(() => {
