@@ -179,6 +179,7 @@ You can also run each test file on its own:
 npm test -- --runTestsByPath utils/week.test.ts
 npm test -- --runTestsByPath utils/notifications.test.ts
 npm test -- --runTestsByPath utils/goals.test.ts
+npm test -- --runTestsByPath services/profile.test.ts
 ```
 
 ## Validation
