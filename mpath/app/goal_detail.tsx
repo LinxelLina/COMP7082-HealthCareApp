@@ -11,6 +11,7 @@ import { Checkbox } from "expo-checkbox";
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Button, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const HYDRATION_DEMO_GOAL_TITLE = "drink water daily";
@@ -144,15 +145,18 @@ export default function GoalDetailScreen() {
     if (goalId === null) {
       return;
     }
+    try{
+      const data = await getGoalById(goalId);
 
-    const data = await getGoalById(goalId);
+      if (!data) return;
 
-    if (!data) return;
-
-    setIsMilestone(!!data.is_milestone);
-    setMilestoneType((data.milestone_type as "" | "streak" | "count") || "");
-    setMilestoneTarget(data.milestone_target != null ? String(data.milestone_target) : "");
-    setCheckInCount(data.check_in_count ?? 0);
+      setIsMilestone(!!data.is_milestone);
+      setMilestoneType((data.milestone_type as "" | "streak" | "count") || "");
+      setMilestoneTarget(data.milestone_target != null ? String(data.milestone_target) : "");
+      setCheckInCount(data.check_in_count ?? 0);
+    }catch(error){
+      Alert.alert("Error","Could not load milestone data. Please try again.")
+    }
   }, [goalId]);
 
   const addCheckIn = async () => {
@@ -211,6 +215,7 @@ export default function GoalDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <ScrollView>
       <Text style={styles.title}>{params.title || "Goal Detail"}</Text>
       <Text style={styles.subtitle}>A quick look at your goal and progress.</Text>
 
@@ -323,6 +328,7 @@ export default function GoalDetailScreen() {
           </View>
         </View>
       )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
