@@ -153,6 +153,30 @@ To run the tests:
 
 npm test
 
+### Testing Approach
+
+We use at least three different testing styles in this project: logic testing, mocked service testing, and app-specific data testing.
+
+We do not test every single aspect of the app, we do test many different aspects and slices of the app in real and meaningful ways.
+
+- Pure utility logic tests: [utils/week.test.ts](./utils/week.test.ts) checks small date and week helpers.
+- Testing notification and external services with mocking: [utils/notifications.test.ts](./utils/notifications.test.ts) checks reminder scheduling logic while mocking Expo notifications and profile settings.
+- App-specific data transformation tests: [utils/goals.test.ts](./utils/goals.test.ts) checks how saved goal records are converted into the proper format used by the app, including defaults and boolean/date conversion.
+
+You can run all tests with:
+
+```bash
+npm test
+```
+
+You can also run each test file on its own:
+
+```bash
+npm test -- --runTestsByPath utils/week.test.ts
+npm test -- --runTestsByPath utils/notifications.test.ts
+npm test -- --runTestsByPath utils/goals.test.ts
+```
+
 ## Continuous Integration Pipeline
 
 - This project uses GitHub Actions to continuously integrate on every pull request and on pushes to the main branch of the repo.
