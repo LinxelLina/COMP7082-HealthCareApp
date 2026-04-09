@@ -1,14 +1,14 @@
 import { addDonation } from "@/services/profile";
-import { supabase } from "@/utils/supabase";
 import {VideoView, useVideoPlayer} from "expo-video";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback } from "react";
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { updateCharityPoint } from "@/services/supabase";
 
 export default function AdVideoScreen() {
 
-  const { charity_id } = useLocalSearchParams<{ charity_id: string }>();
-  const charityId = Number(charity_id);
+  const { charity_name } = useLocalSearchParams<{ charity_name: string }>();
+
   const player = useVideoPlayer(
     Platform.select({
       ios:"https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8",
@@ -22,26 +22,22 @@ export default function AdVideoScreen() {
   );
   useFocusEffect(
     useCallback(() => {
-      const timer = setTimeout(() => {
-        async function updateCharityPoint(){
-          const {error} = await supabase.rpc("increment_contribution", { 
-            charity_id: charityId,
-            contribution: 10  // ← pass whatever value you want here
-          });
-          if (error) {
-            Alert.alert("Error", "There was an issue updating the charity points. Please try again.");
-          }
+      const timer = setTimeout(async () => {
 
-          await addDonation(10);
-          
+        async function updatePoints(){
+          try{
+            await updateCharityPoint(charity_name, 10); //remote database
+            await addDonation(10); //local database
+          }catch(error){
+            Alert.alert("Error", "There was an issue updating points. Please try again.");
+          }          
         }
-        updateCharityPoint();
-        
+        await updatePoints();
 
         Alert.alert("Success","Successfully watched the ad and earned points. Returning to the previous screen.", 
           [{text: "OK", onPress: () => router.back() }]);
 
-      }, 30000); // 30000ms = 30 seconds
+      }, 5000); // 30000ms = 30 seconds
 
       return () => clearTimeout(timer); // cleanup if user leaves page early
     },[])

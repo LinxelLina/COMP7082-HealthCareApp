@@ -125,7 +125,7 @@ export default function Profile() {
       return;
     }
 
-    router.push({ pathname: "/ad_video", params: { charity_id: String(value) } });
+    router.push({ pathname: "/ad_video", params: { charity_name: currentCharity?.label } });
   }
 
 

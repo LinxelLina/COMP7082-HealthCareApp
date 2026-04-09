@@ -6,7 +6,7 @@ import { Charity, Charity_Numbers, CharityFormFields, CharityIdName } from "@/ty
 export async function updateCharityPoint(current_charity: string, contribution: number){
     const {error} = await supabase.rpc("increment_contribution_by_name", { 
         charity_name: current_charity,
-        contribution: 1  // ← change contribution here
+        contribution: contribution  // ← change contribution here
     });
     if (error) {
         Alert.alert("Error", "There was an issue updating the charity points. Please try again.");
