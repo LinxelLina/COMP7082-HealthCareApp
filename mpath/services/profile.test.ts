@@ -1,5 +1,7 @@
 import { updateNoAds } from "./profile";
 
+// Tests that the no-ads preference is saved in the local profile database
+
 const mockDatabase = {
   execAsync: jest.fn(),
   runAsync: jest.fn(),

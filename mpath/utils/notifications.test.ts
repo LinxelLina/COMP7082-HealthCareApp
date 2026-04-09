@@ -3,7 +3,8 @@ import * as Notifications from "expo-notifications";
 import { getProfile } from "@/services/profile";
 import { scheduleDailyGoalReminder } from "./notifications";
 
-// 
+// Tests that reminders are only scheduled when notification requirements are met
+
 jest.mock("@/services/profile", () => ({
   getProfile: jest.fn(),
 }));

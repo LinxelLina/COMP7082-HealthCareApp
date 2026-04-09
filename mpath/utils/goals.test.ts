@@ -2,6 +2,8 @@ import { GoalRecord } from "@/types/goals";
 
 import { mapGoalRecordToHabit } from "./goals";
 
+// Tests that goal records are converted into the habit format used by the app
+
 describe("mapGoalRecordToHabit", () => {
   it("converts a goal record into a habit used by the app", () => {
     const goal: GoalRecord = {
