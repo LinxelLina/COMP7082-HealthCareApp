@@ -98,4 +98,52 @@ describe("mapGoalRecordToHabit", () => {
     expect(result.start_date).toBeInstanceOf(Date);
     expect(result.duration).toBeInstanceOf(Date);
   });
+
+  it("uses an empty string id when the goal id is missing", () => {
+    const goal = {
+      id: null,
+      title: "Journal",
+      description: null,
+      category: null,
+      is_habit: 0,
+      is_completed: 0,
+      is_milestone: 0,
+      milestone_type: null,
+      milestone_target: null,
+      check_in_count: 0,
+      duration_date: null,
+      reminder_enabled: 0,
+      reminder_time: null,
+      reminder_notification_id: null,
+      created_at: "2026-04-04T10:00:00.000Z",
+    } as unknown as GoalRecord;
+
+    const result = mapGoalRecordToHabit(goal);
+
+    expect(result.id).toBe("");
+  });
+
+  it("uses created_at as the habit start date", () => {
+    const goal: GoalRecord = {
+      id: 15,
+      title: "Meditate",
+      description: null,
+      category: "Mental_Health",
+      is_habit: 1,
+      is_completed: 0,
+      is_milestone: 0,
+      milestone_type: null,
+      milestone_target: null,
+      check_in_count: 0,
+      duration_date: null,
+      reminder_enabled: 0,
+      reminder_time: null,
+      reminder_notification_id: null,
+      created_at: "2026-04-05T07:45:00.000Z",
+    };
+
+    const result = mapGoalRecordToHabit(goal);
+
+    expect(result.start_date).toEqual(new Date("2026-04-05T07:45:00.000Z"));
+  });
 });
