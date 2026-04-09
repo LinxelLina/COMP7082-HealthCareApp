@@ -120,44 +120,48 @@ scripts/            Small project scripts
 
 1. Install dependencies:
 
+```bash
 npm install
+```
 
 2. Create a local environment file, a .env
 
 3. Add your Supabase values to `.env`:
 
+```bash
 EXPO_PUBLIC_SUPABASE_URL=your-project-url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
 
 These values are needed for the charity-related screens and remote contribution features.
 
 4. Start the Expo dev server:
 
+```bash
 npx expo start
+```
 
 We would also often run:
 
+```bash
 npx expo start --tunnel
+```
 
 to solve networking issues.
 
 ### Linting
 
+```bash
 npm run lint
-
-### Testing with Jest
-
-We now have a small Jest setup in the project for automated testing.
-
-To run the tests:
-
-npm test
+```
 
 ### Testing Approach
 
-We use at least three different testing styles in this project: logic testing, mocked service testing, and app-specific data testing.
+We now have a small Jest setup in the project for automated testing.
 
-We do not test every single aspect of the app, we do test many different aspects and slices of the app in real and meaningful ways.
+There are at least three different testing styles in this project: logic testing, mocked service testing, and app-specific data testing.
+
+Not every single grain of the app is tested, we do test many different aspects and slices of the app in a real and meaningful ways.
 
 - Pure utility logic tests: [utils/week.test.ts](./utils/week.test.ts) checks small date and week helpers.
 - Testing notification and external services with mocking: [utils/notifications.test.ts](./utils/notifications.test.ts) checks reminder scheduling logic while mocking Expo notifications and profile settings.
