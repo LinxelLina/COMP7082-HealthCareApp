@@ -98,7 +98,6 @@ export default function Profile() {
         console.error("Error updating profile data:", error);
       }
     };
-    setCurrentCharity(value); //update displayed current charity immediately
     updateCurrentCharity(); 
   }, [value]);
 
@@ -117,7 +116,7 @@ export default function Profile() {
   function handleAdVideoPress() {
     // Skip the ad video when the user has chosen the no-ads option.
     if (noAds) {
-      Alert.alert("No ads for you: we respect your choice.");
+      Alert.alert("Ads are turned off in your settings.");
       return;
     }
 
@@ -165,7 +164,7 @@ export default function Profile() {
           <View style={styles.settingRow}>
             <View style={styles.settingTextBlock}>
               <Text style={styles.settingTitle}>No ads</Text>
-              <Text style={styles.settingDescription}>Skip the ad video in the app.</Text>
+              <Text style={styles.settingDescription}>Skip the ad video demo in the app.</Text>
             </View>
             <Switch value={noAds} onValueChange={handleNoAdsChange} />
           </View>
@@ -178,7 +177,7 @@ export default function Profile() {
           </Text>
 
           <Pressable style={styles.actionButton} onPress={handleAdVideoPress}>
-            <Text style={styles.actionButtonText}>Test Ad-Video</Text>
+            <Text style={styles.actionButtonText}>Watch Ad Demo</Text>
           </Pressable>
         </View>
       </View>
