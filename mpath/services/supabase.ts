@@ -1,78 +1,95 @@
 import { supabase } from "@/utils/supabase";
-import { Alert } from "react-native";
 import { addDonation } from "./profile";
 import { Charity, Charity_Numbers, CharityFormFields } from "@/types/charity";
 
 export async function updateCharityPoint(current_charity: string){
-    const {error} = await supabase.rpc("increment_contribution_by_name", { 
-        charity_name: current_charity,
-        contribution: 1  // ← change contribution here
-    });
-    if (error) {
-        Alert.alert("Error", "There was an issue updating the charity points. Please try again.");
-    }
+    try {
+        const { error } = await supabase.rpc("increment_contribution_by_name", { 
+            charity_name: current_charity,
+            contribution: 1
+        });
 
-    await addDonation(1); //local database
+        if (error) {
+            console.error("services/supabase.updateCharityPoint RPC failed:", error);
+            throw new Error(error.message);
+        }
+
+        await addDonation(1);
+    } catch (error) {
+        console.error(`services/supabase.updateCharityPoint failed for charity "${current_charity}":`, error);
+        throw error;
+    }
 };
 
 export async function fetchCharities(): Promise<Charity[]> {
-    const { data, error } = await supabase
-    .from("charity")
-    .select("*");
+    try {
+        const { data, error } = await supabase
+        .from("charity")
+        .select("*");
 
-    if (error) {
-        console.error("Error fetching charities:", error);
-        Alert.alert("Error", "Could not load charities. Please try again.");
-    } 
-    const mappedData = (data?? []).map((charity) => ({
-        id: charity.id.toString(),
-        name: charity.charity_name,
-        category: charity.charity_type ?? "Other",
-        description: charity.description,
-        website: charity.website,
-        contactEmail: charity.contact_email,
-        funds: charity.contribution_total,
-    }));
-    
-    return mappedData;
-    
+        if (error) {
+            console.error("services/supabase.fetchCharities query failed:", error);
+            throw new Error(error.message);
+        }
+
+        return (data ?? []).map((charity) => ({
+            id: charity.id.toString(),
+            name: charity.charity_name,
+            category: charity.charity_type ?? "Other",
+            description: charity.description,
+            website: charity.website,
+            contactEmail: charity.contact_email,
+            funds: charity.contribution_total,
+        }));
+    } catch (error) {
+        console.error("services/supabase.fetchCharities failed:", error);
+        throw error;
+    }
 }
 
 export async function fetchCharityData(): Promise<Charity_Numbers[]> {
-    const {data, error} = await supabase
-    .from("charity")
-    .select("charity_name, contribution_total");
+    try {
+        const { data, error } = await supabase
+        .from("charity")
+        .select("charity_name, contribution_total");
 
-    if(error){
-        console.error("Error fetching charity data:", error);
-        throw new Error(error.message);
+        if (error) {
+            console.error("services/supabase.fetchCharityData query failed:", error);
+            throw new Error(error.message);
+        }
+
+        return (data ?? []).map((charity: any) => ({
+            name: charity.charity_name,
+            value: charity.contribution_total,
+        }));
+    } catch (error) {
+        console.error("services/supabase.fetchCharityData failed:", error);
+        throw error;
     }
-    const mappedData = data?.map((charity: any) => ({
-        name: charity.charity_name,
-        value: charity.contribution_total,
-    }));
-    
-    return mappedData;
 }
 
 export async function addNewCharity(form:CharityFormFields):Promise<boolean>{
-    const {error} = await supabase.from("charity").insert([
-          {
-            created_at: new Date().toISOString(),
-            charity_name: form.name,
-            charity_type: form.type,
-            description: form.description,
-            website: form.website,
-            contact_email: form.contactEmail,
-            contribution_total: 0,
-          }
+    try {
+        const { error } = await supabase.from("charity").insert([
+            {
+                created_at: new Date().toISOString(),
+                charity_name: form.name,
+                charity_type: form.type,
+                description: form.description,
+                website: form.website,
+                contact_email: form.contactEmail,
+                contribution_total: 0,
+            }
         ]);
 
-    if(error){
-        alert("Error submitting form: " + error.message);
-        console.log("Error" + error.message);
+        if (error) {
+            console.error("services/supabase.addNewCharity insert failed:", error);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error("services/supabase.addNewCharity failed:", error);
         return false;
     }
-
-    return true;
 }

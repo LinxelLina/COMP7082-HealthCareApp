@@ -161,7 +161,7 @@ We now have a small Jest setup in the project for automated testing.
 
 There are at least three different testing styles in this project: logic testing, mocked service testing, and app-specific data testing.
 
-Not every single grain of the app is tested, we do test many different aspects and slices of the app in a real and meaningful ways.
+Not every single grain of the app is tested, we do test many different aspects and slices of the app in a real and meaningful way.
 
 - Pure utility logic tests: [utils/week.test.ts](./utils/week.test.ts) checks small date and week helpers.
 - Testing notification and external services with mocking: [utils/notifications.test.ts](./utils/notifications.test.ts) checks reminder scheduling logic while mocking Expo notifications and profile settings.
