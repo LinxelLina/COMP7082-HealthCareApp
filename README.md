@@ -1,68 +1,193 @@
-# COMP7082-HealthCareApp
-COMP 7082 Software Engineering Course Project
+# M-Path
 
-DEV NOTES:
+## The idea
 
-Had some fun here with node and expo, which is a nice wrapper for React Native. With about 3 commands I had a little server for the app running on my computer that I could connect to on my phone just by scanning a QR code (in the Expo Go app). Seems to be really nice and have APIs for everything we'd need. All open source and we could sell an app using this stuff and not owe anyone anything. Works well on my Android and should run well on your iOS.
+Modern life wants everything instantly.
 
-Everything added in the repo is from the default node and expo installs, except for some small changes to add the "M-Path" title in mobile/App.tsx! If you're not so familiar with React or Git or any of this stuff it would make me happy to go over parts of it in more detail!
+- instant messages
+- instant noodles
+- instant replays
+- instant advice from strangers who definitely have it all figured out
 
-## Setup Instructions:
+Meanwhile, most of the things that actually help people are not so dramatic. They are usually small, repetitive, unglamorous actions done over and over until they start to matter.
 
-#### 1. Get Node + Expo Go
+M-Path is a student-built mobile app prototype based on that idea. The goal is to make small, healthy actions feel more visible, more meaningful, and a little easier to stick with over time, instead of treating self-improvement like a magical one-click life patch.
 
-[Go here](https://nodejs.org/en/download/archive/v24.13.0) and get probably:
+## The problem
 
-"node-\<LTS-version\>-x64.msi"
+It is easy to start healthy habits and just as easy to immediately forget them when life gets particularly real. A lot of self-improvement tools lean hard into all-or-nothing thinking, which is great if you are a productivity cyborg and less great if you are a human being.
 
-To make sure you have it downloaded you can enter into cmd prompt or powershell: 
+M-Path tries to support a slower and more realistic model:
 
-```cmd prompt
-node -v
-npm -v
+- track small goals and habits
+- make progress visible
+- support reminders and repeat check-ins
+- connect personal progress to a broader sense of contribution through charity-related features
+
+Tiny actions, repeated consistently, stop being tiny.
+
+## Current features
+
+These are the features that are currently implemented in the codebase:
+
+- Goal and habit creation with title, description, category, optional milestone settings, and optional reminder time
+- Local, private data storage using SQLite
+- Goal list with filtering by category and milestone status
+- Goal completion, deletion, and detail views
+- Milestone tracking with either check-in counts or target dates
+- Weekly summary screen that derives progress information from saved goals
+- Local notification support for goal reminders and milestone-related notifications
+- Profile screen with charity selection and simple app settings
+- Charity list fetched from Supabase
+- Charity submission form that inserts charity records into Supabase
+- Charity contribution graph based on Supabase data
+- A small ad-video demo flow that updates contribution totals
+- A home screen that shows goals plus a tappable mascot, because we're cool like that.
+
+## Tech stack
+
+- React Native
+- Expo
+- Expo Router
+- TypeScript
+- SQLite
+- Supabase JavaScript client
+- Expo Notifications
+- Expo AV
+- React Native chart libraries for the charity graph view
+
+The project is configured as an Expo app in [app.json](./app.json), and the main scripts are in [package.json](./package.json).
+
+### Local app data
+
+Goals and profile/settings data are stored privately and locally on the device using SQLite.
+
+- [services/goals.ts](./services/goals.ts) handles goal table creation and goal CRUD-style operations
+- [services/profile.ts](./services/profile.ts) handles profile-related local storage such as selected charity label, total donations, notification toggle, and ad toggle
+
+This means the core goal-tracking part of the app is primarily local-first.
+
+### Remote charity data
+
+Supabase is used for charity-related features.
+
+- [utils/supabase.ts](./utils/supabase.ts) creates the client from environment variables
+- charity list and charity graph screens fetch charity data from Supabase
+- the charity form inserts new charity rows into Supabase
+- some goal completion and ad-video flows call Supabase RPC functions to increase contribution totals
+
+### Navigation and UI flow
+
+- [app/_layout.tsx](./app/_layout.tsx) sets up the root stack, database initialization, and notification initialization
+- [app/(tabs)/_layout.tsx](./app/(tabs)/_layout.tsx) defines the tab layout
+- most user-facing screens live under [app](./app) and [app/(tabs)](./app/%28tabs%29)
+
+1. The app starts and initializes local storage plus notifications.
+2. Users create and manage goals locally.
+3. Summary views read from local goal data.
+4. Charity-related screens read from and write to Supabase.
+5. Profile settings influence behavior such as notification handling and the ad-video flow.
+
+## Important folders
+
+```text
+app/                Main screens and route files
+app/(tabs)/         Tab-based screens like Home, Summary, Charities, and Profile
+services/           SQLite data logic for goals and profile data
+utils/              Shared helpers such as Supabase client, notifications calculations
+components/         Reusable UI components
+assets/             App icons, images, and mascot GIFs
+scripts/            Small project scripts
 ```
 
-Once complete, go on your phone to your App store and download Expo Go.
+## Install and run
 
-#### 2. Clone the repo
+### Requirements
 
-Create a folder you want to use for the app on your local machine. Then navigate to that folder in the command prompt, I like to right-click an empty spot on the folder and go open in cmd prompt or whatever. From there enter:
+- Node.js and npm
+- Expo tooling via `npx expo`
+- Expo Go on a phone, or an emulator/simulator
 
-```cmd prompt
- git clone https://github.com/LinxelLina/COMP7082-HealthCareApp.git
- cd COMP7082-HEALTHCAREAPP/mobile
+### Setup
+
+1. Install dependencies:
+
+```bash
+npm install
 ```
 
- This was this simple for me because I recently configured git, but could vary for you!
+2. Create a local environment file, a .env
 
-#### 3. Install NPM and launch your Expo server!
+3. Add your Supabase values to `.env`:
 
-From the same /mobile folder run:
+```bash
+EXPO_PUBLIC_SUPABASE_URL=your-project-url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
 
-```cmd prompt
-npm install expo
+These values are needed for the charity-related screens and remote contribution features.
+
+4. Start the Expo dev server, make sure your phone and the server are on the same wifi!
+
+```bash
 npx expo start
 ```
 
-Make sure the server and your phone are on the same wifi, and scan the QR code generated in your cmd prompt with the Expo Go app from your phone. The app should load automatically with the word "M-Path" in green and in the middle.
+If can't get on same wifi or network problems:
 
-It didn't work at first for me, only did when I ran:
-
-```cmd prompt
+```bash
 npx expo start --tunnel
 ```
 
-
-Ctrl + C should end the app on your cmd prompt.
-
-#### Making changes
-
-Go to the root directory, COMP7082-HealthCareApp. If git is setup correctly you can go:
+### Linting
 
 ```bash
-git add .
-git commit -m "message"
-git push origin main
+npm run lint
 ```
 
-Use `git push origin` for the first push, then just `git push` afterwards.
+### Testing Approach
+
+We now have a small Jest setup in the project for automated testing.
+
+There are at least three different testing styles in this project: logic testing, mocked service testing, and app-specific data testing.
+
+Not every single grain of the app is tested, but we test all core functionality in some way with meaningful and diverse tests.
+
+- Pure utility logic tests: [utils/week.test.ts](./utils/week.test.ts) checks small date and week helpers.
+- Testing notification and external services with mocking: [utils/notifications.test.ts](./utils/notifications.test.ts) checks reminder scheduling logic while mocking Expo notifications and profile settings.
+- App-specific data transformation tests: [utils/goals.test.ts](./utils/goals.test.ts) checks how saved goal records are converted into the proper format used by the app, including defaults and boolean/date conversion.
+
+You can run all tests with:
+
+```bash
+npm test
+```
+
+You can also run each test file on its own:
+
+```bash
+npm test -- --runTestsByPath utils/week.test.ts
+npm test -- --runTestsByPath utils/notifications.test.ts
+npm test -- --runTestsByPath utils/goals.test.ts
+npm test -- --runTestsByPath services/profile.test.ts
+npm test -- --runTestsByPath services/supabase.test.ts
+npm test -- --runTestsByPath services/milestones.test.ts
+```
+
+## Validation
+
+- Form inputs are checked before submitting in [app/goal_form.tsx](./app/goal_form.tsx) and [app/charity_form.tsx](./app/charity_form.tsx). These checks include required fields, date checks, milestone target checks, URL validation, and email validation.
+- Local SQLite database calls in [services/goals.ts](./services/goals.ts) and [services/profile.ts](./services/profile.ts) use parameterized queries with `?` placeholders and separate values passed into `runAsync(...)` and `getAllAsync(...)`, which is safer than building SQL strings directly from user input.
+
+## Continuous Integration Pipeline
+
+- This project uses GitHub Actions to continuously integrate on every pull request and on pushes to the main branch of the repo.
+- The pipeline automatically installs dependencies, runs lint, and runs tests.
+- Its purpose is to catch breaks early and improve reliability by validating code automatically before and / or after integration.
+- The project prioritised CI over full CD because the repo is still in the prototyping stage. The most meaningful automation at this stage is validating installation, code quality, and test results on each change
+
+## In Conclusion
+
+M-Path has goals, reminders, milestones, 2 databases, charts, charity data, and a mascot you can pet, which is a pretty darn good amount of features. Especially considering we only had 2 team members and limited time! We had a lot of fun and learned a lot.
+
+Thank you for your interest and time.
