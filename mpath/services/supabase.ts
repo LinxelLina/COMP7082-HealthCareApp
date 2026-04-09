@@ -1,18 +1,25 @@
 import { supabase } from "@/utils/supabase";
 import { addDonation } from "./profile";
 import { Charity, Charity_Numbers, CharityFormFields, CharityIdName } from "@/types/charity";
+import { Alert } from "react-native";
 
 export async function updateCharityPoints(current_charity: string, contribution: number){
     const {error} = await supabase.rpc("increment_contribution_by_name", { 
         charity_name: current_charity,
-        contribution: contribution  // ← change contribution here
+        contribution: contribution // ← change contribution here
     });
+
     if (error) {
         Alert.alert("Error", "There was an issue updating the charity points. Please try again.");
+        throw new Error(error.message);
     }
-    
+
     await addDonation(contribution); //local database
 };
+
+export async function updateCharityPoint(current_charity: string) {
+    return updateCharityPoints(current_charity, 1);
+}
 
 export async function fetchCharities(): Promise<Charity[]> {
     try {

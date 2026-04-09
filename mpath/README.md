@@ -1,6 +1,6 @@
 # M-Path
 
-## Thesis
+## The idea
 
 Modern life wants everything instantly.
 
@@ -187,13 +187,6 @@ npm test -- --runTestsByPath services/milestones.test.ts
 - The pipeline automatically installs dependencies, runs lint, and runs tests.
 - Its purpose is to catch breaks early and improve reliability by validating code automatically before and / or after integration.
 - The project prioritised CI over full CD because the repo is still in the prototyping stage. The most meaningful automation at this stage is validating installation, code quality, and test results on each change
-
-## Known limitations
-
-- Some charity features depend on a matching Supabase project, tables, and RPC functions already existing
-- Supabase access is handled directly in some screens instead of through a dedicated abstraction layer
-- The app mixes local-only data and remote charity data, so the overall data model is functional but not fully streamlined
-- Deprecations for expo notifications and video were not yet replaced
 
 ## In Conclusion
 
