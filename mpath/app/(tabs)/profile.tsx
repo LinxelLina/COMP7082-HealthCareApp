@@ -169,7 +169,7 @@ export default function Profile() {
           <View style={styles.settingRow}>
             <View style={styles.settingTextBlock}>
               <Text style={styles.settingTitle}>No ads</Text>
-              <Text style={styles.settingDescription}>Skip the ad video in the app.</Text>
+              <Text style={styles.settingDescription}>Skip the ad video demo in the app.</Text>
             </View>
             <Switch value={noAds} onValueChange={handleNoAdsChange} />
           </View>
