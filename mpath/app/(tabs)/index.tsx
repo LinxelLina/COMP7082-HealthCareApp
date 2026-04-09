@@ -19,6 +19,7 @@ Notifications.setNotificationHandler({
 LogBox.ignoreLogs([
   "expo-notifications: Android Push notifications",
   "was removed from Expo Go",
+  "SafeAreaView" //added because all code is up to date, it is libraries that need to be updated
 ]);
 
 export default function HomeScreen() {

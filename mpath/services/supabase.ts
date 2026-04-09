@@ -1,9 +1,9 @@
 import { supabase } from "@/utils/supabase";
 import { Alert } from "react-native";
 import { addDonation } from "./profile";
-import { Charity, Charity_Numbers, CharityFormFields } from "@/types/charity";
+import { Charity, Charity_Numbers, CharityFormFields, CharityIdName } from "@/types/charity";
 
-export async function updateCharityPoint(current_charity: string){
+export async function updateCharityPoint(current_charity: string, contribution: number){
     const {error} = await supabase.rpc("increment_contribution_by_name", { 
         charity_name: current_charity,
         contribution: 1  // ← change contribution here
@@ -75,4 +75,16 @@ export async function addNewCharity(form:CharityFormFields):Promise<boolean>{
     }
 
     return true;
+}
+
+export async function getCharityIdName(): Promise<CharityIdName[]>{
+    const {data, error} = await supabase
+        .from("charity")
+        .select('id, charity_name');
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        return data ?? [];
 }

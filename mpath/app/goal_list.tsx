@@ -118,7 +118,7 @@ export default function GoalsList({ showDropdownOverlay,disableDropdown, onRefre
       }
 
       try{
-        await updateCharityPoint(profileData.current_charity);
+        await updateCharityPoint(profileData.current_charity, 1);
 
         const nextValue = !currentList.find(item => item.id === id)?.isComplete;
         await updateGoalCompletion(Number(id), nextValue);

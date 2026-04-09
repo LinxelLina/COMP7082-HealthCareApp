@@ -1,6 +1,5 @@
 import { addDonation } from "@/services/profile";
 import { supabase } from "@/utils/supabase";
-import { ResizeMode } from "expo-av";
 import {VideoView, useVideoPlayer} from "expo-video";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback } from "react";
@@ -42,7 +41,7 @@ export default function AdVideoScreen() {
         Alert.alert("Success","Successfully watched the ad and earned points. Returning to the previous screen.", 
           [{text: "OK", onPress: () => router.back() }]);
 
-      }, 5000); // 30000ms = 30 seconds
+      }, 30000); // 30000ms = 30 seconds
 
       return () => clearTimeout(timer); // cleanup if user leaves page early
     },[])
@@ -56,7 +55,8 @@ export default function AdVideoScreen() {
         contentFit="cover"
         nativeControls={false}
       />
-      <View style={[StyleSheet.absoluteFill, styles.videoOverlay]} pointerEvents="box-only"/>
+      {/* View added as an overlay to prevent user interaction with the video, nativeControls={false} does not work on iOS */}
+      <View style={[StyleSheet.absoluteFill, styles.videoOverlay]} pointerEvents="box-only"/> 
       <Pressable style={styles.skipButton} onPress={() => router.back()}>
         <Text style={styles.skipText}>Skip</Text>
       </Pressable>

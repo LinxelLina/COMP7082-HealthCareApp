@@ -137,7 +137,7 @@ export default function CharityList() {
                                     <Text style={styles.modalLabel}>Description</Text>
                                     <Text>{selected.description}</Text>
 
-                                    <Text style={styles.modalLabel}>Website [Click for more Information]</Text>
+                                    <Text style={styles.modalLabel}>Website</Text>
                                     <Text>{selected.website}</Text>
 
                                     <Text style={styles.modalLabel}>Contact</Text>
@@ -147,7 +147,7 @@ export default function CharityList() {
                                     <Text>${selected.funds}</Text>
 
                                     <Pressable onPress={() => openLink(selected.website)}>
-                                      <Text style={{color: "blue", textDecorationLine: "underline", fontSize: 25}}>Learn More</Text>
+                                      <Text style={{color: "blue", textDecorationLine: "underline", fontSize: 25}}>Visit Website</Text>
                                     </Pressable>
                               </>
                             )}
