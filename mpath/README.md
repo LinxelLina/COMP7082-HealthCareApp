@@ -181,6 +181,11 @@ npm test -- --runTestsByPath utils/notifications.test.ts
 npm test -- --runTestsByPath utils/goals.test.ts
 ```
 
+## Validation
+
+- Form inputs are checked before submitting in [app/goal_form.tsx](./app/goal_form.tsx) and [app/charity_form.tsx](./app/charity_form.tsx). These checks include required fields, date checks, milestone target checks, URL validation, and email validation.
+- Local SQLite database calls in [services/goals.ts](./services/goals.ts) and [services/profile.ts](./services/profile.ts) use parameterized queries with `?` placeholders and separate values passed into `runAsync(...)` and `getAllAsync(...)`, which is safer than building SQL strings directly from user input.
+
 ## Continuous Integration Pipeline
 
 - This project uses GitHub Actions to continuously integrate on every pull request and on pushes to the main branch of the repo.
