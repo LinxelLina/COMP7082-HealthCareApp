@@ -1,5 +1,7 @@
 import { addWeeks, formatWeekRange, startOfWeekMonday } from "./week";
 
+// Tests that week/date helper functions return the correct values
+
 describe("utils/week", () => {
   describe("startOfWeekMonday", () => {
     it("returns the Monday of the same week and resets the time to midnight", () => {

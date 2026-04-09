@@ -19,6 +19,19 @@ const HYDRATION_DEMO_NOTIFICATION_TITLE = "Hydration milestone complete";
 const HYDRATION_DEMO_NOTIFICATION_BODY =
   "Your memory, cognitive performance, and energy levels can be measurably improved because you’re staying hydrated.";
 
+type GoalDetailParams = {
+  goal_id?: string;
+  title?: string;
+  category?: string;
+  description?: string;
+  is_habit?: string;
+  is_completed?: string;
+  is_milestone?: string;
+  milestone_type?: string;
+  milestone_target?: string;
+  duration_date?: string;
+};
+
 function normalizeGoalTitle(value: string | string[] | undefined) {
   const title = Array.isArray(value) ? value[0] : value;
 
@@ -29,22 +42,50 @@ function normalizeGoalTitle(value: string | string[] | undefined) {
   return title.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
+function getSavedDurationSummary(durationDate?: string) {
+  if (!durationDate?.trim()) {
+    return {
+      durationText: "",
+      targetDateLabel: "",
+    };
+  }
+
+  const endDate = new Date(durationDate);
+  const diff = endDate.getTime() - Date.now();
+  const oneDay = 24 * 60 * 60 * 1000;
+
+  if (Number.isNaN(endDate.getTime())) {
+    return {
+      durationText: "",
+      targetDateLabel: "",
+    };
+  }
+
+  const targetDateLabel = endDate.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const durationText =
+    diff < 0
+      ? `Overdue by ${(Math.abs(diff) / oneDay).toFixed(1)} days`
+      : `${(diff / oneDay).toFixed(1)} days left`;
+
+  return {
+    durationText,
+    targetDateLabel,
+  };
+}
+
+function parseMilestoneTarget(value: string) {
+  return value.trim() === "" ? null : parseInt(value, 10);
+}
+
 export default function GoalDetailScreen() {
-  const params = useLocalSearchParams<{
-    goal_id?: string;
-    title?: string;
-    category?: string;
-    description?: string;
-    is_habit?: string;
-    is_completed?: string;
-    is_milestone?: string;
-    milestone_type?: string;
-    milestone_target?: string;
-    duration_date?: string;
-  }>();
+  const params = useLocalSearchParams<GoalDetailParams>();
 
   const hasDescription = !!params.description?.trim();
-  const hasSavedDuration = !!params.duration_date?.trim();
   const isHabitGoal = params.is_habit === "true";
   const isCompleted = params.is_completed === "true";
   const statusText = isCompleted ? "Completed" : "In progress";
@@ -67,29 +108,7 @@ export default function GoalDetailScreen() {
   const isHydrationDemoGoal = normalizedTitle === HYDRATION_DEMO_GOAL_TITLE;
   const showHydrationDemoTrigger =
     isHydrationDemoGoal && isMilestone && milestoneType === "count" && hasMilestoneTarget;
-
-  let durationText = "";
-  let targetDateLabel = "";
-
-  if (hasSavedDuration) {
-    const endDate = new Date(params.duration_date as string);
-    const diff = endDate.getTime() - Date.now();
-    const oneDay = 24 * 60 * 60 * 1000;
-
-    if (!Number.isNaN(endDate.getTime())) {
-      targetDateLabel = endDate.toLocaleDateString([], {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-
-      if (diff < 0) {
-        durationText = `Overdue by ${(Math.abs(diff) / oneDay).toFixed(1)} days`;
-      } else {
-        durationText = `${(diff / oneDay).toFixed(1)} days left`;
-      }
-    }
-  }
+  const { durationText, targetDateLabel } = getSavedDurationSummary(params.duration_date);
 
   const progressSummaryText =
     milestoneType === "count" && hasMilestoneTarget
@@ -102,7 +121,7 @@ export default function GoalDetailScreen() {
       return;
     }
 
-    const parsedTarget = milestoneTarget.trim() === "" ? null : parseInt(milestoneTarget, 10);
+    const parsedTarget = parseMilestoneTarget(milestoneTarget);
 
     if (parsedTarget !== null && !Number.isFinite(parsedTarget)) {
       Alert.alert("Invalid milestone target", "Please enter a valid milestone target.");
@@ -138,7 +157,14 @@ export default function GoalDetailScreen() {
 
     setIsMilestone(true);
     setShowMilestoneForm(false);
-    Alert.alert("Saved", "Goal is now a milestone.");
+      Alert.alert("Saved", "Goal is now a milestone.");
+  };
+
+  const handleDurationChange = (event: any, selectedDate?: Date) => {
+    if (event?.type === "set" && selectedDate) {
+      setDuration(selectedDate);
+    }
+    setShowDatePicker(false);
   };
 
   const loadMilestoneValues = useCallback(async () => {
@@ -215,119 +241,114 @@ export default function GoalDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
-      <Text style={styles.title}>{params.title || "Goal Detail"}</Text>
-      <Text style={styles.subtitle}>A quick look at your goal and progress.</Text>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.title}>{params.title || "Goal Detail"}</Text>
+        <Text style={styles.subtitle}>A quick look at your goal and progress.</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Overview</Text>
-        <Text style={styles.rowText}>Category: {params.category || "Other"}</Text>
-        <Text style={styles.rowText}>Type: {goalTypeText}</Text>
-        <Text style={styles.rowText}>Status: {statusText}</Text>
-        {hasDescription && <Text style={styles.rowText}>Why it matters: {params.description}</Text>}
-      </View>
-
-      {isMilestone ? (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Progress</Text>
-
-          {milestoneType === "count" && (
-            <>
-              <Text style={styles.rowText}>Check-in goal</Text>
-              {hasMilestoneTarget && (
-                <Text style={styles.rowText}>Target: {milestoneTarget} check-ins</Text>
-              )}
-              <Text style={styles.rowText}>{progressSummaryText}</Text>
-              <Pressable style={styles.primaryButton} onPress={addCheckIn}>
-                <Text style={styles.primaryButtonText}>Add check-in</Text>
-              </Pressable>
-              {showHydrationDemoTrigger && (
-                <Pressable
-                  onPress={triggerHydrationDemo}
-                  disabled={isHydrationDemoLoading}
-                  hitSlop={8}
-                  style={styles.demoTrigger}
-                >
-                  <Text style={styles.demoTriggerText}>
-                    {isHydrationDemoLoading ? "Triggering hydration demo..." : "Hydration demo"}
-                  </Text>
-                </Pressable>
-              )}
-            </>
-          )}
-
-          {milestoneType === "streak" && (
-            <>
-              <Text style={styles.rowText}>Target date goal</Text>
-              {targetDateLabel ? (
-                <Text style={styles.rowText}>Target date: {targetDateLabel}</Text>
-              ) : (
-                <Text style={styles.rowText}>Add a target date to track this goal.</Text>
-              )}
-              {durationText && <Text style={styles.rowText}>{durationText}</Text>}
-            </>
-          )}
+          <Text style={styles.cardTitle}>Overview</Text>
+          <Text style={styles.rowText}>Category: {params.category || "Other"}</Text>
+          <Text style={styles.rowText}>Type: {goalTypeText}</Text>
+          <Text style={styles.rowText}>Status: {statusText}</Text>
+          {hasDescription && <Text style={styles.rowText}>Why it matters: {params.description}</Text>}
         </View>
-      ) : (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Milestone</Text>
-          <View style={styles.milestoneSection}>
-            <Button
-              title="Set as milestone"
-              onPress={() => setShowMilestoneForm((prev) => !prev)}
-            />
-            {showMilestoneForm && (
+
+        {isMilestone ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Progress</Text>
+
+            {milestoneType === "count" && (
               <>
-                <Text style={styles.formLabel}>Milestone type</Text>
-                <Picker selectedValue={milestoneType} onValueChange={(value) => setMilestoneType(value)}>
-                  <Picker.Item label="Select milestone type" value="" />
-                  <Picker.Item label="Target date goal" value="streak" />
-                  <Picker.Item label="Check-in goal" value="count" />
-                </Picker>
-
-                <Text style={styles.formLabel}>Milestone target</Text>
-                <TextInput
-                  style={styles.milestoneInput}
-                  value={milestoneTarget}
-                  onChangeText={setMilestoneTarget}
-                  keyboardType="numeric"
-                  placeholder="Milestone target"
-                />
-
-                <View style={styles.durationSection}>
-                  <Checkbox
-                    style={styles.checkbox}
-                    value={hasDuration}
-                    onValueChange={(value) => {
-                      setHasDuration(value);
-                      setShowDatePicker(value);
-                    }}
-                  />
-                  <Text>Add a target date?</Text>
-                </View>
-
-                {showDatePicker && (
-                  <DateTimePicker
-                    testID="dateTimePicker"
-                    value={duration}
-                    mode={"date"}
-                    is24Hour={true}
-                    onChange={(event, selectedDate) => {
-                      if (event?.type === "set" && selectedDate) {
-                        setDuration(selectedDate);
-                      }
-                      setShowDatePicker(false);
-                    }}
-                  />
+                <Text style={styles.rowText}>Check-in goal</Text>
+                {hasMilestoneTarget && (
+                  <Text style={styles.rowText}>Target: {milestoneTarget} check-ins</Text>
                 )}
+                <Text style={styles.rowText}>{progressSummaryText}</Text>
+                <Pressable style={styles.primaryButton} onPress={addCheckIn}>
+                  <Text style={styles.primaryButtonText}>Add check-in</Text>
+                </Pressable>
+                {showHydrationDemoTrigger && (
+                  <Pressable
+                    onPress={triggerHydrationDemo}
+                    disabled={isHydrationDemoLoading}
+                    hitSlop={8}
+                    style={styles.demoTrigger}
+                  >
+                    <Text style={styles.demoTriggerText}>
+                      {isHydrationDemoLoading ? "Triggering hydration demo..." : "Hydration demo"}
+                    </Text>
+                  </Pressable>
+                )}
+              </>
+            )}
 
-                {hasDuration && <Text style={styles.helperText}>Target date: {duration.toLocaleString()}</Text>}
-                <Button title="Save Milestone" onPress={saveMilestone} />
+            {milestoneType === "streak" && (
+              <>
+                <Text style={styles.rowText}>Target date goal</Text>
+                {targetDateLabel ? (
+                  <Text style={styles.rowText}>Target date: {targetDateLabel}</Text>
+                ) : (
+                  <Text style={styles.rowText}>Add a target date to track this goal.</Text>
+                )}
+                {durationText && <Text style={styles.rowText}>{durationText}</Text>}
               </>
             )}
           </View>
-        </View>
-      )}
+        ) : (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Milestone</Text>
+            <View style={styles.milestoneSection}>
+              <Button
+                title="Set as milestone"
+                onPress={() => setShowMilestoneForm((prev) => !prev)}
+              />
+              {showMilestoneForm && (
+                <>
+                  <Text style={styles.formLabel}>Milestone type</Text>
+                  <Picker selectedValue={milestoneType} onValueChange={(value) => setMilestoneType(value)}>
+                    <Picker.Item label="Select milestone type" value="" />
+                    <Picker.Item label="Target date goal" value="streak" />
+                    <Picker.Item label="Check-in goal" value="count" />
+                  </Picker>
+
+                  <Text style={styles.formLabel}>Milestone target</Text>
+                  <TextInput
+                    style={styles.milestoneInput}
+                    value={milestoneTarget}
+                    onChangeText={setMilestoneTarget}
+                    keyboardType="numeric"
+                    placeholder="Milestone target"
+                  />
+
+                  <View style={styles.durationSection}>
+                    <Checkbox
+                      style={styles.checkbox}
+                      value={hasDuration}
+                      onValueChange={(value) => {
+                        setHasDuration(value);
+                        setShowDatePicker(value);
+                      }}
+                    />
+                    <Text>Add a target date?</Text>
+                  </View>
+
+                  {showDatePicker && (
+                    <DateTimePicker
+                      testID="dateTimePicker"
+                      value={duration}
+                      mode={"date"}
+                      is24Hour={true}
+                      onChange={handleDurationChange}
+                    />
+                  )}
+
+                  {hasDuration && <Text style={styles.helperText}>Target date: {duration.toLocaleString()}</Text>}
+                  <Button title="Save Milestone" onPress={saveMilestone} />
+                </>
+              )}
+            </View>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -338,6 +359,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f4f6f8",
     padding: 16,
+  },
+  content: {
+    paddingBottom: 24,
   },
   title: {
     color: "#2f3e46",

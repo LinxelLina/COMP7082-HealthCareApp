@@ -37,71 +37,106 @@ async function ensureColumn(
 }
 
 export async function initGoalsDatabase() {
-  const database = await getDb();
+  try {
+    const database = await getDb();
 
-  await database.execAsync(`
-    CREATE TABLE IF NOT EXISTS profile (
-      current_charity TEXT,
-      total_donations REAL DEFAULT 0,
-      disable_notifications INTEGER NOT NULL DEFAULT 0,
-      no_ads INTEGER NOT NULL DEFAULT 0
-    );
-  `);
+    await database.execAsync(`
+      CREATE TABLE IF NOT EXISTS profile (
+        current_charity TEXT,
+        total_donations REAL DEFAULT 0,
+        disable_notifications INTEGER NOT NULL DEFAULT 0,
+        no_ads INTEGER NOT NULL DEFAULT 0
+      );
+    `);
 
-  await ensureColumn(database, "disable_notifications", "INTEGER NOT NULL DEFAULT 0");
-  await ensureColumn(database, "no_ads", "INTEGER NOT NULL DEFAULT 0");
+    await ensureColumn(database, "disable_notifications", "INTEGER NOT NULL DEFAULT 0");
+    await ensureColumn(database, "no_ads", "INTEGER NOT NULL DEFAULT 0");
 
-  await database.runAsync(`
-    INSERT INTO profile (current_charity, total_donations)
-    SELECT NULL, 0 WHERE NOT EXISTS (SELECT 1 FROM profile)
-  `);
-  return database;
+    await database.runAsync(`
+      INSERT INTO profile (current_charity, total_donations)
+      SELECT NULL, 0 WHERE NOT EXISTS (SELECT 1 FROM profile)
+    `);
+    return database;
+  } catch (error) {
+    console.error("services/profile.initGoalsDatabase failed:", error);
+    throw error;
+  }
 }
 
 export async function getProfile() {
-  const database = await initGoalsDatabase();
-  const rows = await database.getAllAsync<ProfileRecord>(
-    "SELECT * FROM profile"
-  );
-  return rows[0] ?? null;
+  try {
+    const database = await initGoalsDatabase();
+    const rows = await database.getAllAsync<ProfileRecord>(
+      "SELECT * FROM profile"
+    );
+    return rows[0] ?? null;
+  } catch (error) {
+    console.error("services/profile.getProfile failed:", error);
+    throw error;
+  }
 }
 
 export async function getCharity(id: number) {
-  const database = await initGoalsDatabase();
-  const rows = await database.getAllAsync<ProfileRecord>("SELECT current_charity FROM profile");
+  try {
+    const database = await initGoalsDatabase();
+    const rows = await database.getAllAsync<ProfileRecord>("SELECT current_charity FROM profile");
 
-  return rows[0] ?? null;
+    return rows[0] ?? null;
+  } catch (error) {
+    console.error(`services/profile.getCharity failed for id ${id}:`, error);
+    throw error;
+  }
 }
 
 export async function updateCharity(id: number, charity: string) {
-  const database = await initGoalsDatabase();
-  await database.getAllAsync<ProfileRecord>(
-    `UPDATE profile SET current_charity = ?`,
-    charity
-  );
+  try {
+    const database = await initGoalsDatabase();
+    await database.getAllAsync<ProfileRecord>(
+      `UPDATE profile SET current_charity = ?`,
+      charity
+    );
+  } catch (error) {
+    console.error(`services/profile.updateCharity failed for id ${id}:`, error);
+    throw error;
+  }
 }
 
 
 export async function addDonation(amount: number) {
-  const database = await initGoalsDatabase();
-  await database.runAsync(
-    `UPDATE profile SET total_donations = total_donations + ?`,
-    amount
-  );
+  try {
+    const database = await initGoalsDatabase();
+    await database.runAsync(
+      `UPDATE profile SET total_donations = total_donations + ?`,
+      amount
+    );
+  } catch (error) {
+    console.error(`services/profile.addDonation failed for amount ${amount}:`, error);
+    throw error;
+  }
 }
 
 export async function updateDisableNotifications(disableNotifications: boolean) {
-  const database = await initGoalsDatabase();
-  await database.runAsync(
-    `UPDATE profile SET disable_notifications = ?`,
-    toInt(disableNotifications)
-  );
+  try {
+    const database = await initGoalsDatabase();
+    await database.runAsync(
+      `UPDATE profile SET disable_notifications = ?`,
+      toInt(disableNotifications)
+    );
+  } catch (error) {
+    console.error("services/profile.updateDisableNotifications failed:", error);
+    throw error;
+  }
 }
 
 export async function updateNoAds(noAds: boolean) {
-  const database = await initGoalsDatabase();
-  await database.runAsync(
-    `UPDATE profile SET no_ads = ?`,
-    toInt(noAds)
-  );
+  try {
+    const database = await initGoalsDatabase();
+    await database.runAsync(
+      `UPDATE profile SET no_ads = ?`,
+      toInt(noAds)
+    );
+  } catch (error) {
+    console.error("services/profile.updateNoAds failed:", error);
+    throw error;
+  }
 }

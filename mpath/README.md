@@ -120,38 +120,73 @@ scripts/            Small project scripts
 
 1. Install dependencies:
 
+```bash
 npm install
+```
 
 2. Create a local environment file, a .env
 
 3. Add your Supabase values to `.env`:
 
+```bash
 EXPO_PUBLIC_SUPABASE_URL=your-project-url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
 
 These values are needed for the charity-related screens and remote contribution features.
 
 4. Start the Expo dev server:
 
+```bash
 npx expo start
+```
 
 We would also often run:
 
+```bash
 npx expo start --tunnel
+```
 
 to solve networking issues.
 
 ### Linting
 
+```bash
 npm run lint
+```
 
-### Testing with Jest
+### Testing Approach
 
 We now have a small Jest setup in the project for automated testing.
 
-To run the tests:
+There are at least three different testing styles in this project: logic testing, mocked service testing, and app-specific data testing.
 
+Not every single grain of the app is tested, we do test many different aspects and slices of the app in a real and meaningful way.
+
+- Pure utility logic tests: [utils/week.test.ts](./utils/week.test.ts) checks small date and week helpers.
+- Testing notification and external services with mocking: [utils/notifications.test.ts](./utils/notifications.test.ts) checks reminder scheduling logic while mocking Expo notifications and profile settings.
+- App-specific data transformation tests: [utils/goals.test.ts](./utils/goals.test.ts) checks how saved goal records are converted into the proper format used by the app, including defaults and boolean/date conversion.
+
+You can run all tests with:
+
+```bash
 npm test
+```
+
+You can also run each test file on its own:
+
+```bash
+npm test -- --runTestsByPath utils/week.test.ts
+npm test -- --runTestsByPath utils/notifications.test.ts
+npm test -- --runTestsByPath utils/goals.test.ts
+npm test -- --runTestsByPath services/profile.test.ts
+npm test -- --runTestsByPath services/supabase.test.ts
+```
+
+## Validation
+
+- Form inputs are checked before submitting in [app/goal_form.tsx](./app/goal_form.tsx) and [app/charity_form.tsx](./app/charity_form.tsx). These checks include required fields, date checks, milestone target checks, URL validation, and email validation.
+- Local SQLite database calls in [services/goals.ts](./services/goals.ts) and [services/profile.ts](./services/profile.ts) use parameterized queries with `?` placeholders and separate values passed into `runAsync(...)` and `getAllAsync(...)`, which is safer than building SQL strings directly from user input.
 
 ## Continuous Integration Pipeline
 
@@ -160,11 +195,12 @@ npm test
 - Its purpose is to catch breaks early and improve reliability by validating code automatically before and / or after integration.
 - The project prioritised CI over full CD because the repo is still in the prototyping stage. The most meaningful automation at this stage is validating installation, code quality, and test results on each change
 
-## Known limitations / rough edges
+## Known limitations
 
 - Some charity features depend on a matching Supabase project, tables, and RPC functions already existing
 - Supabase access is handled directly in some screens instead of through a dedicated abstraction layer
 - The app mixes local-only data and remote charity data, so the overall data model is functional but not fully streamlined
+- Deprecations for expo notifications and video were not yet replaced
 
 ## In Conclusion
 
