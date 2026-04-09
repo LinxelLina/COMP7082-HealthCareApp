@@ -1,15 +1,26 @@
 import { addDonation } from "@/services/profile";
 import { supabase } from "@/utils/supabase";
-import { ResizeMode, Video } from "expo-av";
+import { ResizeMode } from "expo-av";
+import {VideoView, useVideoPlayer} from "expo-video";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function AdVideoScreen() {
 
   const { charity_id } = useLocalSearchParams<{ charity_id: string }>();
   const charityId = Number(charity_id);
-
+  const player = useVideoPlayer(
+    Platform.select({
+      ios:"https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8",
+      android:"https://samplelib.com/mp4/sample-30s.mp4",
+      default:"https://samplelib.com/mp4/sample-30s.mp4",
+    })!,
+    (player) => {
+      player.loop = true;
+      player.play();
+    }
+  );
   useFocusEffect(
     useCallback(() => {
       const timer = setTimeout(() => {
@@ -39,14 +50,13 @@ export default function AdVideoScreen() {
 
   return (
     <View style={styles.container}>
-      <Video
+      <VideoView
         style={styles.video}
-        source={{ uri: "https://samplelib.com/lib/preview/mp4/sample-5s.mp4" }}
-        useNativeControls
-        resizeMode={ResizeMode.COVER}
-        isLooping
-        shouldPlay
+        player={player}
+        contentFit="cover"
+        nativeControls={false}
       />
+      <View style={[StyleSheet.absoluteFill, styles.videoOverlay]} pointerEvents="box-only"/>
       <Pressable style={styles.skipButton} onPress={() => router.back()}>
         <Text style={styles.skipText}>Skip</Text>
       </Pressable>
@@ -70,9 +80,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 6,
+    zIndex:2,
   },
   skipText: {
     color: "#fff",
     fontWeight: "600",
   },
+  videoOverlay:{
+    zIndex:1,
+  }
 });
