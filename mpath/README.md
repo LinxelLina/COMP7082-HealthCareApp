@@ -58,10 +58,6 @@ These are the features that are currently implemented in the codebase:
 
 The project is configured as an Expo app in [app.json](./app.json), and the main scripts are in [package.json](./package.json).
 
-## High-level architecture / data flow
-
-NOT SURE WHAT TO PUT HERE YET
-
 ### Local app data
 
 Goals and profile/settings data are stored privately and locally on the device using SQLite.
@@ -79,10 +75,6 @@ Supabase is used for charity-related features.
 - charity list and charity graph screens fetch charity data from Supabase
 - the charity form inserts new charity rows into Supabase
 - some goal completion and ad-video flows call Supabase RPC functions to increase contribution totals
-
-TOO HONEST BELOW?!
-
-Note: Supabase usage exists, but it is not cleanly wrapped in a nice back-end architecture or service layer or anything. Supabase is sometimes called directly. That is less about purposeful design and more about shipping a working demo.
 
 ### Navigation and UI flow
 
@@ -181,6 +173,7 @@ npm test -- --runTestsByPath utils/notifications.test.ts
 npm test -- --runTestsByPath utils/goals.test.ts
 npm test -- --runTestsByPath services/profile.test.ts
 npm test -- --runTestsByPath services/supabase.test.ts
+npm test -- --runTestsByPath services/milestones.test.ts
 ```
 
 ## Validation
