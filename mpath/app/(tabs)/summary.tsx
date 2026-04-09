@@ -333,6 +333,7 @@ export default function SummaryScreen() {
         ) : (
           milestones.map((m, i) => {
             const progressPercent = getMilestoneProgress(m);
+            const isLast = i === milestones.length - 1;
             const subLeft = getMilestoneSubtext(m);
             const remainingHoursLabel = getRemainingHoursLabel(m);
             const progressBarColor = progressPercent !== null ? getProgressBarColor(progressPercent) : accent;
@@ -340,12 +341,15 @@ export default function SummaryScreen() {
             const progressBlockMargin = i === milestones.length - 1 ? 12 : 8;
 
             return (
-              <View key={m.goal_id}>
+              <View key={m.goal_id}
+                style={{        
+                  borderBottomWidth: isLast ? 0 : 1,
+                  borderBottomColor: border,}}>
                 <Row
                   left={m.title}
                   right={getMilestoneValue(m)}
                   subLeft={subLeft}
-                  isLast={false}
+                  isLast={true}
                   borderColor={border}
                   textColor={textColor}
                   muted={muted}
