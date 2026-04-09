@@ -1,30 +1,20 @@
 import { getProfile, updateCharity, updateDisableNotifications, updateNoAds } from "@/services/profile";
-import { supabase } from "@/utils/supabase";
+import { getCharityIdName } from "@/services/supabase";
+import { CharityInProfile, CharityIdName } from "@/types/charity";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-type Charity = {
-    value: number;
-    label: string;
-}
-
-type ProfileRecord = {
-  current_charity: string | null;
-  total_donations: number;
-  disable_notifications: number;
-  no_ads: number;
-};
+import { ProfileRecord } from "@/services/profile"; 
 
 
 export default function Profile() {
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
-  const [currentCharity, setCurrentCharity] = useState<Charity | null>(null);
+  const [currentCharity, setCurrentCharity] = useState<CharityInProfile | null>(null);
   const [isOpen, setOpen] = useState(false);
-  const [value, setValue] = useState(null);
-  const [items, setItems] = useState<Charity[]>([]);
+  const [value, setValue] = useState<number |null>(null);
+  const [items, setItems] = useState<CharityInProfile[]>([]);
   const [disableNotifications, setDisableNotifications] = useState(false);
   const [noAds, setNoAds] = useState(false);
 
@@ -37,25 +27,24 @@ export default function Profile() {
   useFocusEffect(
     useCallback(() => {
       async function refreshProfile() {
-        const profileData = await getProfile();
-        applyProfileData(profileData);
+        try{
+          const profileData = await getProfile();
+          applyProfileData(profileData);
+        }catch (error){
+          console.error("Error refreshing profile.",error);
+        }
+        
       }
       refreshProfile();
     }, [])
   );
+
   useEffect(() => { //set up the page by fetching charity list and profile data
     async function initialize() {
       try {
-        const {data, error} = await supabase
-        .from("charity")
-        .select('id, charity_name');
-
-        if (error) {
-          console.error("Error fetching charities:", error);
-          return;
-        }
-
-        const charityList = data?.map((charity) => ({
+        const data = await getCharityIdName();
+        
+        const charityList = data?.map((charity:CharityIdName) => ({
           value: charity.id,
           label: charity.charity_name,
         })) ?? [];
@@ -74,6 +63,7 @@ export default function Profile() {
         }
       } catch (error) {
         console.error("Error fetching charity data:", error);
+        Alert.alert("Error", "Could not load profile data. Please try again.");
       }
     }
     initialize();
@@ -96,6 +86,7 @@ export default function Profile() {
         
       }catch (error) {
         console.error("Error updating profile data:", error);
+        Alert.alert("Error", "Could not update charity. Please try again.");
       }
     };
     updateCurrentCharity(); 
@@ -104,23 +95,37 @@ export default function Profile() {
   async function handleDisableNotificationsChange(value: boolean) {
     // True is disabled notifications (after setting has changed)
     setDisableNotifications(value);
-    await updateDisableNotifications(value);
+    try{
+      await updateDisableNotifications(value);
+    }catch(error){
+      setDisableNotifications(!value); //go back if failed
+      Alert.alert("Error","Could not update notification settings.");
+    }
   }
 
   async function handleNoAdsChange(value: boolean) {
     // True means no ads for the user.
     setNoAds(value);
-    await updateNoAds(value);
+    try{
+      await updateNoAds(value);
+    }catch(error){
+      setNoAds(!value); //go back if failed
+      Alert.alert("Error","Could not update ad settings.")
+    }
   }
 
   function handleAdVideoPress() {
     // Skip the ad video when the user has chosen the no-ads option.
     if (noAds) {
-      Alert.alert("Ads are turned off in your settings.");
+      Alert.alert("No ads for you: we respect your choice.");
+      return;
+    }
+    if(value === null){
+      Alert.alert("No Charity Selected","Please select a charity before watching an ad.")
       return;
     }
 
-    router.push({ pathname: "/ad_video", params: { charity_id: String(value) } });
+    router.push({ pathname: "/ad_video", params: { charity_name: currentCharity?.label } });
   }
 
 
@@ -177,7 +182,7 @@ export default function Profile() {
           </Text>
 
           <Pressable style={styles.actionButton} onPress={handleAdVideoPress}>
-            <Text style={styles.actionButtonText}>Watch Ad Demo</Text>
+            <Text style={styles.actionButtonText}>Optional Ad [10 Contribution Points]</Text>
           </Pressable>
         </View>
       </View>

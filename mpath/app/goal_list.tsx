@@ -7,7 +7,7 @@ import { router, useFocusEffect } from "expo-router";
 import { getProfile } from "@/services/profile";
 import { GoalsListProps } from "../types/goals";
 import { Habit } from "../types/habit";
-import { updateCharityPoint } from "@/services/supabase";
+import { updateCharityPoints } from "@/services/supabase";
 
 export default function GoalsList({ showDropdownOverlay,disableDropdown, onRefresh }: GoalsListProps) {
     const [currentList, setCurrentList] = useState<Habit[]>([]);
@@ -118,7 +118,7 @@ export default function GoalsList({ showDropdownOverlay,disableDropdown, onRefre
       }
 
       try{
-        await updateCharityPoint(profileData.current_charity);
+        await updateCharityPoints(profileData.current_charity, 1);
 
         const nextValue = !currentList.find(item => item.id === id)?.isComplete;
         await updateGoalCompletion(Number(id), nextValue);

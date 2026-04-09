@@ -1,24 +1,17 @@
 import { supabase } from "@/utils/supabase";
 import { addDonation } from "./profile";
-import { Charity, Charity_Numbers, CharityFormFields } from "@/types/charity";
+import { Charity, Charity_Numbers, CharityFormFields, CharityIdName } from "@/types/charity";
 
-export async function updateCharityPoint(current_charity: string){
-    try {
-        const { error } = await supabase.rpc("increment_contribution_by_name", { 
-            charity_name: current_charity,
-            contribution: 1
-        });
-
-        if (error) {
-            console.error("services/supabase.updateCharityPoint RPC failed:", error);
-            throw new Error(error.message);
-        }
-
-        await addDonation(1);
-    } catch (error) {
-        console.error(`services/supabase.updateCharityPoint failed for charity "${current_charity}":`, error);
-        throw error;
+export async function updateCharityPoints(current_charity: string, contribution: number){
+    const {error} = await supabase.rpc("increment_contribution_by_name", { 
+        charity_name: current_charity,
+        contribution: contribution  // ← change contribution here
+    });
+    if (error) {
+        Alert.alert("Error", "There was an issue updating the charity points. Please try again.");
     }
+    
+    await addDonation(contribution); //local database
 };
 
 export async function fetchCharities(): Promise<Charity[]> {
@@ -92,4 +85,16 @@ export async function addNewCharity(form:CharityFormFields):Promise<boolean>{
         console.error("services/supabase.addNewCharity failed:", error);
         return false;
     }
+}
+
+export async function getCharityIdName(): Promise<CharityIdName[]>{
+    const {data, error} = await supabase
+        .from("charity")
+        .select('id, charity_name');
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        return data ?? [];
 }

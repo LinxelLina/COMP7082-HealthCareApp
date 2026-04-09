@@ -12,6 +12,11 @@ export type Charity = {
     funds: number;
 };
 
+export type CharityInProfile = {
+    value: number;
+    label: string;
+}
+
 export const CHARITYCATEGORYNAMES: Record<Charity_Category, string> = {
     Education: "Education",
     Environment: "Environment",
@@ -39,4 +44,9 @@ export type CharityFormFields = {
     description: string;
     website: string;
     contactEmail: string;
+}
+
+export type CharityIdName ={
+    id: number;
+    charity_name: string;
 }
