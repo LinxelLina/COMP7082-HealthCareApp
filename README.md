@@ -53,7 +53,7 @@ These are the features that are currently implemented in the codebase:
 - SQLite
 - Supabase JavaScript client
 - Expo Notifications
-- Expo AV
+- Expo Video
 - React Native chart libraries for the charity graph view
 
 The project is configured as an Expo app in [mpath/app.json](./mpath/app.json), and the main scripts are in [mpath/package.json](./mpath/package.json).
@@ -90,7 +90,7 @@ Supabase is used for charity-related features.
 
 ## Important folders
 
-The repository root contains documentation and separate root package files. The actual Expo app is the nested `mpath/` directory; `mobile/` contains only a tracked `.gitignore` and may contain ignored local dependency files. It has no application manifest or source. Keep these folder names and run app commands from the nested app directory.
+The repository root contains documentation and separate root package files. The actual Expo app is the nested `mpath/` directory; `mobile/` contains a tracked `.gitignore` and a few tracked dependency files. It has no application manifest or application source. Keep these folder names and run app commands from the nested app directory.
 
 ```text
 mpath/              Expo app; installation and launch directory
@@ -101,7 +101,7 @@ mpath/utils/        Shared helpers, notifications, and Supabase client
 mpath/components/   Reusable UI components
 mpath/assets/       Icons, images, and mascot GIFs
 mpath/scripts/      Project scripts
-mobile/             No app; tracked .gitignore only
+mobile/             No app; .gitignore and a few tracked dependency files
 presentation/       Presentation material
 ```
 
@@ -115,12 +115,12 @@ presentation/       Presentation material
 
 ### Setup
 
-The repository root is `C:\Users\scott\projects\mpath`. The Expo app is in its nested `mpath/` folder (`C:\Users\scott\projects\mpath\mpath`). Run installation, launch, lint, and test commands in that app folder, using its `package-lock.json`; the root package files are separate.
+The repository root is the folder where you cloned M-Path. The Expo app is in its nested `mpath/` folder. Run installation, launch, lint, and test commands in that app folder, using its `package-lock.json`; the root package files are separate.
 
-1. Open PowerShell and select the app folder:
+1. Open PowerShell and select the app folder (replace the placeholder with your checkout path):
 
 ```powershell
-Set-Location 'C:\Users\scott\projects\mpath'
+Set-Location '<path-to-your-checkout>'
 Set-Location '.\mpath'
 ```
 
@@ -168,7 +168,7 @@ We now have a small Jest setup in the project for automated testing.
 
 There are at least three different testing styles in this project: logic testing, mocked service testing, and app-specific data testing.
 
-Not every single grain of the app is tested, but we test all core functionality in some way with meaningful and diverse tests.
+Not every single grain of the app is tested, but we test selected core logic and service behavior with meaningful and diverse tests.
 
 - Pure utility logic tests: [utils/week.test.ts](./mpath/utils/week.test.ts) checks small date and week helpers.
 - Testing notification and external services with mocking: [utils/notifications.test.ts](./mpath/utils/notifications.test.ts) checks reminder scheduling logic while mocking Expo notifications and profile settings.
