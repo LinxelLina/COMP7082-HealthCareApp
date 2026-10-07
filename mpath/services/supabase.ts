@@ -6,7 +6,7 @@ import { Alert } from "react-native";
 export async function updateCharityPoints(current_charity: string, contribution: number){
     const {error} = await supabase.rpc("increment_contribution_by_name", { 
         charity_name: current_charity,
-        contribution: contribution // ← change contribution here
+        contribution: contribution
     });
 
     if (error) {
@@ -14,7 +14,8 @@ export async function updateCharityPoints(current_charity: string, contribution:
         throw new Error(error.message);
     }
 
-    await addDonation(contribution); //local database
+    // Update the local contribution total only after the remote RPC succeeds.
+    await addDonation(contribution);
 };
 
 export async function updateCharityPoint(current_charity: string) {
