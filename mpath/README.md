@@ -79,7 +79,7 @@ Supabase is used for charity-related features.
 ### Navigation and UI flow
 
 - [app/_layout.tsx](./app/_layout.tsx) sets up the root stack, database initialization, and notification initialization
-- [app/(tabs)/_layout.tsx](./app/(tabs)/_layout.tsx) defines the tab layout
+- [app/(tabs)/_layout.tsx](./app/%28tabs%29/_layout.tsx) defines the tab layout
 - most user-facing screens live under [app](./app) and [app/(tabs)](./app/%28tabs%29)
 
 1. The app starts and initializes local storage plus notifications.
@@ -90,10 +90,14 @@ Supabase is used for charity-related features.
 
 ## Important folders
 
+The repository root contains documentation and separate root package files. The actual Expo app is the nested `mpath/` directory; `mobile/` contains only a tracked `.gitignore` and may contain ignored local dependency files. It has no application manifest or source. Keep these folder names and run app commands from the nested app directory.
+
+The paths below are relative to this app directory.
+
 ```text
 app/                Main screens and route files
 app/(tabs)/         Tab-based screens like Home, Summary, Charities, and Profile
-services/           SQLite data logic for goals and profile data
+services/           SQLite goals/profile storage and Supabase charity operations
 utils/              Shared helpers such as Supabase client, notifications calculations
 components/         Reusable UI components
 assets/             App icons, images, and mascot GIFs
@@ -104,42 +108,52 @@ scripts/            Small project scripts
 
 ### Requirements
 
-- Node.js and npm
+- Node.js meeting React Native’s minimum (`>=20.19.4`) and npm
 - Expo tooling via `npx expo`
-- Expo Go on a phone, or an emulator/simulator
+- Expo Go compatible with SDK 54 on an Android phone, or a compatible emulator/simulator
 
 ### Setup
 
-1. Install dependencies:
+The repository root is `C:\Users\scott\projects\mpath`. The Expo app is in its nested `mpath/` folder (`C:\Users\scott\projects\mpath\mpath`). Run installation, launch, lint, and test commands in that app folder, using its `package-lock.json`; the root package files are separate.
 
-```bash
-npm install
+1. Open PowerShell and select the app folder:
+
+```powershell
+Set-Location 'C:\Users\scott\projects\mpath'
+Set-Location '.\mpath'
 ```
 
-2. Create a local environment file, a .env
+2. Create local configuration from the example, only if `.env` does not already exist:
 
-3. Add your Supabase values to `.env`:
-
-```bash
-EXPO_PUBLIC_SUPABASE_URL=your-project-url
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```powershell
+Copy-Item '.\.env.example' '.\.env'
 ```
 
-These values are needed for the charity-related screens and remote contribution features.
+Set `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` in this app-local `.env` to your Supabase project URL and client key. If `.env` exists, update those entries and preserve other entries. This file is ignored by Git. Never use a service-role key in the app.
 
-4. Start the Expo dev server:
+The Supabase client initializes when imported by the home-screen goal list, so valid configuration is needed at startup even though goals and profile settings use local SQLite. Charity screens and contribution updates also require the remote project to be available.
 
-```bash
+3. Install the committed dependencies:
+
+```powershell
+npm ci
+```
+
+4. Start Expo over LAN:
+
+```powershell
 npx expo start
 ```
 
-We would also often run:
+Use an Android phone with Expo Go compatible with SDK 54. Get the matching version from [Expo’s official download page](https://expo.dev/go?sdkVersion=54&platform=android&device=true). Connect the phone and PC to the same Wi-Fi, open Expo Go, and scan the terminal QR code.
 
-```bash
+If LAN networking fails, stop the server with `Ctrl+C` and restart from the same app folder:
+
+```powershell
 npx expo start --tunnel
 ```
 
-to solve networking issues.
+Tunnel mode requires internet on both devices and may require Expo’s ngrok helper. Starting the server does not confirm that the app has opened successfully on the phone.
 
 ### Linting
 

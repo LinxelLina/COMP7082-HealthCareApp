@@ -56,14 +56,14 @@ These are the features that are currently implemented in the codebase:
 - Expo AV
 - React Native chart libraries for the charity graph view
 
-The project is configured as an Expo app in [app.json](./app.json), and the main scripts are in [package.json](./package.json).
+The project is configured as an Expo app in [mpath/app.json](./mpath/app.json), and the main scripts are in [mpath/package.json](./mpath/package.json).
 
 ### Local app data
 
 Goals and profile/settings data are stored privately and locally on the device using SQLite.
 
-- [services/goals.ts](./services/goals.ts) handles goal table creation and goal CRUD-style operations
-- [services/profile.ts](./services/profile.ts) handles profile-related local storage such as selected charity label, total donations, notification toggle, and ad toggle
+- [services/goals.ts](./mpath/services/goals.ts) handles goal table creation and goal CRUD-style operations
+- [services/profile.ts](./mpath/services/profile.ts) handles profile-related local storage such as selected charity label, total donations, notification toggle, and ad toggle
 
 This means the core goal-tracking part of the app is primarily local-first.
 
@@ -71,16 +71,16 @@ This means the core goal-tracking part of the app is primarily local-first.
 
 Supabase is used for charity-related features.
 
-- [utils/supabase.ts](./utils/supabase.ts) creates the client from environment variables
+- [utils/supabase.ts](./mpath/utils/supabase.ts) creates the client from environment variables
 - charity list and charity graph screens fetch charity data from Supabase
 - the charity form inserts new charity rows into Supabase
 - some goal completion and ad-video flows call Supabase RPC functions to increase contribution totals
 
 ### Navigation and UI flow
 
-- [app/_layout.tsx](./app/_layout.tsx) sets up the root stack, database initialization, and notification initialization
-- [app/(tabs)/_layout.tsx](./app/(tabs)/_layout.tsx) defines the tab layout
-- most user-facing screens live under [app](./app) and [app/(tabs)](./app/%28tabs%29)
+- [app/_layout.tsx](./mpath/app/_layout.tsx) sets up the root stack, database initialization, and notification initialization
+- [app/(tabs)/_layout.tsx](./mpath/app/%28tabs%29/_layout.tsx) defines the tab layout
+- most user-facing screens live under [app](./mpath/app) and [app/(tabs)](./mpath/app/%28tabs%29)
 
 1. The app starts and initializes local storage plus notifications.
 2. Users create and manage goals locally.
@@ -90,54 +90,71 @@ Supabase is used for charity-related features.
 
 ## Important folders
 
+The repository root contains documentation and separate root package files. The actual Expo app is the nested `mpath/` directory; `mobile/` contains only a tracked `.gitignore` and may contain ignored local dependency files. It has no application manifest or source. Keep these folder names and run app commands from the nested app directory.
+
 ```text
-app/                Main screens and route files
-app/(tabs)/         Tab-based screens like Home, Summary, Charities, and Profile
-services/           SQLite data logic for goals and profile data
-utils/              Shared helpers such as Supabase client, notifications calculations
-components/         Reusable UI components
-assets/             App icons, images, and mascot GIFs
-scripts/            Small project scripts
+mpath/              Expo app; installation and launch directory
+mpath/app/          Screens and route files
+mpath/app/(tabs)/   Home, Goals List, Summary, Charities, and Profile tabs
+mpath/services/     Local SQLite and remote Supabase data operations
+mpath/utils/        Shared helpers, notifications, and Supabase client
+mpath/components/   Reusable UI components
+mpath/assets/       Icons, images, and mascot GIFs
+mpath/scripts/      Project scripts
+mobile/             No app; tracked .gitignore only
+presentation/       Presentation material
 ```
 
 ## Install and run
 
 ### Requirements
 
-- Node.js and npm
+- Node.js meeting React Native’s minimum (`>=20.19.4`) and npm
 - Expo tooling via `npx expo`
-- Expo Go on a phone, or an emulator/simulator
+- Expo Go compatible with SDK 54 on an Android phone, or a compatible emulator/simulator
 
 ### Setup
 
-1. Install dependencies:
+The repository root is `C:\Users\scott\projects\mpath`. The Expo app is in its nested `mpath/` folder (`C:\Users\scott\projects\mpath\mpath`). Run installation, launch, lint, and test commands in that app folder, using its `package-lock.json`; the root package files are separate.
 
-```bash
-npm install
+1. Open PowerShell and select the app folder:
+
+```powershell
+Set-Location 'C:\Users\scott\projects\mpath'
+Set-Location '.\mpath'
 ```
 
-2. Create a local environment file, a .env
+2. Create local configuration from the example, only if `.env` does not already exist:
 
-3. Add your Supabase values to `.env`:
-
-```bash
-EXPO_PUBLIC_SUPABASE_URL=your-project-url
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```powershell
+Copy-Item '.\.env.example' '.\.env'
 ```
 
-These values are needed for the charity-related screens and remote contribution features.
+Set `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` in this app-local `.env` to your Supabase project URL and client key. If `.env` exists, update those entries and preserve other entries. This file is ignored by Git. Never use a service-role key in the app.
 
-4. Start the Expo dev server, make sure your phone and the server are on the same wifi!
+The Supabase client initializes when imported by the home-screen goal list, so valid configuration is needed at startup even though goals and profile settings use local SQLite. Charity screens and contribution updates also require the remote project to be available.
 
-```bash
+3. Install the committed dependencies:
+
+```powershell
+npm ci
+```
+
+4. Start Expo over LAN:
+
+```powershell
 npx expo start
 ```
 
-If can't get on same wifi or network problems:
+Use an Android phone with Expo Go compatible with SDK 54. Get the matching version from [Expo’s official download page](https://expo.dev/go?sdkVersion=54&platform=android&device=true). Connect the phone and PC to the same Wi-Fi, open Expo Go, and scan the terminal QR code.
 
-```bash
+If LAN networking fails, stop the server with `Ctrl+C` and restart from the same app folder:
+
+```powershell
 npx expo start --tunnel
 ```
+
+Tunnel mode requires internet on both devices and may require Expo’s ngrok helper. Starting the server does not confirm that the app has opened successfully on the phone.
 
 ### Linting
 
@@ -153,9 +170,9 @@ There are at least three different testing styles in this project: logic testing
 
 Not every single grain of the app is tested, but we test all core functionality in some way with meaningful and diverse tests.
 
-- Pure utility logic tests: [utils/week.test.ts](./utils/week.test.ts) checks small date and week helpers.
-- Testing notification and external services with mocking: [utils/notifications.test.ts](./utils/notifications.test.ts) checks reminder scheduling logic while mocking Expo notifications and profile settings.
-- App-specific data transformation tests: [utils/goals.test.ts](./utils/goals.test.ts) checks how saved goal records are converted into the proper format used by the app, including defaults and boolean/date conversion.
+- Pure utility logic tests: [utils/week.test.ts](./mpath/utils/week.test.ts) checks small date and week helpers.
+- Testing notification and external services with mocking: [utils/notifications.test.ts](./mpath/utils/notifications.test.ts) checks reminder scheduling logic while mocking Expo notifications and profile settings.
+- App-specific data transformation tests: [utils/goals.test.ts](./mpath/utils/goals.test.ts) checks how saved goal records are converted into the proper format used by the app, including defaults and boolean/date conversion.
 
 You can run all tests with:
 
@@ -176,8 +193,8 @@ npm test -- --runTestsByPath services/milestones.test.ts
 
 ## Validation
 
-- Form inputs are checked before submitting in [app/goal_form.tsx](./app/goal_form.tsx) and [app/charity_form.tsx](./app/charity_form.tsx). These checks include required fields, date checks, milestone target checks, URL validation, and email validation.
-- Local SQLite database calls in [services/goals.ts](./services/goals.ts) and [services/profile.ts](./services/profile.ts) use parameterized queries with `?` placeholders and separate values passed into `runAsync(...)` and `getAllAsync(...)`, which is safer than building SQL strings directly from user input.
+- Form inputs are checked before submitting in [app/goal_form.tsx](./mpath/app/goal_form.tsx) and [app/charity_form.tsx](./mpath/app/charity_form.tsx). These checks include required fields, date checks, milestone target checks, URL validation, and email validation.
+- Local SQLite database calls in [services/goals.ts](./mpath/services/goals.ts) and [services/profile.ts](./mpath/services/profile.ts) use parameterized queries with `?` placeholders and separate values passed into `runAsync(...)` and `getAllAsync(...)`, which is safer than building SQL strings directly from user input.
 
 ## Continuous Integration Pipeline
 
