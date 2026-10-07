@@ -1,4 +1,4 @@
-import { getProfile, updateCharity, updateDisableNotifications, updateNoAds } from "@/services/profile";
+import { getProfile, updateCharity, updateDisableNotifications, updateNoAds, type ProfileRecord } from "@/services/profile";
 import { getCharityIdName } from "@/services/supabase";
 import { CharityInProfile, CharityIdName } from "@/types/charity";
 import { router, useFocusEffect } from "expo-router";
@@ -6,7 +6,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ProfileRecord } from "@/services/profile"; 
 
 
 export default function Profile() {
