@@ -23,14 +23,12 @@ export default function AdVideoScreen() {
     useCallback(() => {
       const timer = setTimeout(async () => {
 
-        async function updatePoints(){
-          try{
-            await updateCharityPoints(charity_name, 10); //remote database and local
-          }catch(error){
-            Alert.alert("Error", "There was an issue updating points. Please try again.");
-          }          
+        try{
+          await updateCharityPoints(charity_name, 10); //remote database and local
+        }catch(error){
+          Alert.alert("Error", "There was an issue updating points. Please try again.");
+          return;
         }
-        await updatePoints();
 
         Alert.alert("Success","Successfully watched the ad and earned points. Returning to the previous screen.", 
           [{text: "OK", onPress: () => router.back() }]);

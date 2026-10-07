@@ -30,15 +30,7 @@ export default function GoalsList({ showDropdownOverlay,disableDropdown, onRefre
       try {
         const goals = await fetchAndCleanGoals()
 
-        setCurrentList(prev => {
-          // Only update if something actually changed
-          const isSame = prev.length === goals.length &&
-            prev.every((item, i) => 
-              item.id === goals[i].id && 
-              item.isComplete === goals[i].isComplete
-            );
-          return isSame ? prev : goals;
-        });
+        setCurrentList(goals);
       } catch (error) {
         console.error('Error fetching goals:', error);
         Alert.alert("Error", "Could not load goals. Please try again.");
@@ -118,9 +110,10 @@ export default function GoalsList({ showDropdownOverlay,disableDropdown, onRefre
       }
 
       try{
-        await updateCharityPoints(profileData.current_charity, 1);
-
         const nextValue = !currentList.find(item => item.id === id)?.isComplete;
+        if (nextValue) {
+          await updateCharityPoints(profileData.current_charity, 1);
+        }
         await updateGoalCompletion(Number(id), nextValue);
 
         setCurrentList(prev =>

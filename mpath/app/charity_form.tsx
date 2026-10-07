@@ -16,7 +16,7 @@ export default function CharityForm() {
     });
 
     const onSubmitHandler = async () => {
-        // Validate form fields
+        // Check required fields and the optional website and email formats.
         if (!form.name.trim()) {
             alert("Please enter a charity name.");
             return;
@@ -37,7 +37,7 @@ export default function CharityForm() {
             alert("Please enter a valid email address.");
             return;
         }
-          // Submit form data to backend or perform desired action
+        // Insert the charity into Supabase after the checks pass.
         try{
           const addToCharity:boolean = await addNewCharity(form);
           if(!addToCharity){
@@ -45,7 +45,7 @@ export default function CharityForm() {
             return;
           }
 
-          // Charity list does not update after adding, app refresh required, not going to add refresh functionality to simulate an application process.
+          // The charity list fetches on mount; returning to it does not refresh its data.
           alert("Charity submitted successfully! Awaiting approval.");
 
           setForm({
